@@ -1,0 +1,1089 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Edit, Trash2, Package, Users, ShoppingCart, Star, MessageSquare, Home } from 'lucide-react';
+import { CartProvider } from '@/contexts/CartContext';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import ImageUpload from '@/components/ImageUpload';
+import HomepageImageUpload from '@/components/HomepageImageUpload';
+import EditProductDialog from '@/components/EditProductDialog';
+
+// Add BlogCategory type for local use
+interface BlogCategory {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  images: { url: string; text: string }[];
+}
+
+const Admin = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [homepageContent, setHomepageContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // New product form state
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    catalog_number: '',
+    images: [],
+    in_stock: true,
+    featured: false,
+    rating: '',
+    reviews: '',
+    stock_quantity: ''
+  });
+
+  // New testimonial form state
+  const [newTestimonial, setNewTestimonial] = useState({
+    customer_name: '',
+    customer_email: '',
+    rating: '',
+    review_text: '',
+    is_featured: true
+  });
+
+  // Homepage content form state
+  const [newHomepageContent, setNewHomepageContent] = useState({
+    hero_title: '',
+    hero_subtitle: '',
+    hero_description: '',
+    hero_image_url: ''
+  });
+
+  // Blog category management state
+  const [blogCategories, setBlogCategories] = useState<BlogCategory[]>([]);
+  const [blogCatLoading, setBlogCatLoading] = useState(false);
+
+  const categories = [
+    'Dream Catcher',
+    'Embroidery', 
+    'Lippan Arts',
+    'Resin Art Work',
+    'Illustration',
+    'Candles',
+    'Calligraphy',
+    'Hair Accessories',
+    'Others'
+  ];
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Fetch blog categories from Supabase on mount
+  useEffect(() => {
+    const fetchBlogCategories = async () => {
+      setBlogCatLoading(true);
+      const { data, error } = await (supabase as any).from('blog_categories').select('*').order('name');
+      if (!error && data) setBlogCategories(data as BlogCategory[]);
+      setBlogCatLoading(false);
+    };
+    fetchBlogCategories();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch products
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (productsError) throw productsError;
+      setProducts(productsData || []);
+
+      // Fetch orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setOrders(ordersData || []);
+
+      // Fetch users from profiles
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (usersError) throw usersError;
+      setUsers(usersData || []);
+
+      // Fetch testimonials
+      const { data: testimonialsData, error: testimonialsError } = await supabase
+        .from('testimonials')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (testimonialsError) throw testimonialsError;
+      setTestimonials(testimonialsData || []);
+
+      // Fetch homepage content
+      const { data: homepageData, error: homepageError } = await supabase
+        .from('homepage_content')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (homepageError && homepageError.code !== 'PGRST116') {
+        console.error('Error fetching homepage content:', homepageError);
+      } else if (homepageData) {
+        setHomepageContent(homepageData);
+        setNewHomepageContent({
+          hero_title: homepageData.hero_title,
+          hero_subtitle: homepageData.hero_subtitle,
+          hero_description: homepageData.hero_description,
+          hero_image_url: homepageData.hero_image_url
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    try {
+      const productData = {
+        name: newProduct.name,
+        description: newProduct.description,
+        price: parseFloat(newProduct.price),
+        category: newProduct.category,
+        catalog_number: newProduct.catalog_number,
+        images: newProduct.images.length > 0 ? newProduct.images : ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
+        in_stock: newProduct.in_stock,
+        featured: newProduct.featured,
+        rating: newProduct.rating ? parseFloat(newProduct.rating) : null,
+        reviews: newProduct.reviews ? parseInt(newProduct.reviews) : 0,
+        stock_quantity: newProduct.stock_quantity ? parseInt(newProduct.stock_quantity) : 0
+      };
+
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product added successfully!",
+      });
+
+      // Reset form
+      setNewProduct({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        catalog_number: '',
+        images: [],
+        in_stock: true,
+        featured: false,
+        rating: '',
+        reviews: '',
+        stock_quantity: ''
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddTestimonial = async () => {
+    try {
+      const testimonialData = {
+        customer_name: newTestimonial.customer_name,
+        customer_email: newTestimonial.customer_email,
+        rating: parseInt(newTestimonial.rating),
+        review_text: newTestimonial.review_text,
+        is_featured: newTestimonial.is_featured
+      };
+
+      const { error } = await supabase
+        .from('testimonials')
+        .insert([testimonialData]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Testimonial added successfully!",
+      });
+
+      // Reset form
+      setNewTestimonial({
+        customer_name: '',
+        customer_email: '',
+        rating: '',
+        review_text: '',
+        is_featured: true
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error adding testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add testimonial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTestimonial = async (testimonialId) => {
+    if (!confirm('Are you sure you want to delete this testimonial?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .delete()
+        .eq('id', testimonialId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Testimonial deleted successfully!",
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete testimonial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleTestimonialFeatured = async (testimonialId, currentFeatured) => {
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .update({ is_featured: !currentFeatured })
+        .eq('id', testimonialId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Testimonial ${!currentFeatured ? 'featured' : 'unfeatured'} successfully!`,
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update testimonial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully!",
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ order_status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Order status updated successfully!",
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateHomepageContent = async () => {
+    try {
+      const { error } = await supabase
+        .from('homepage_content')
+        .update({
+          hero_title: newHomepageContent.hero_title,
+          hero_subtitle: newHomepageContent.hero_subtitle,
+          hero_description: newHomepageContent.hero_description,
+          hero_image_url: newHomepageContent.hero_image_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', homepageContent?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Homepage content updated successfully!",
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating homepage content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update homepage content. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CartProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard - Charmntreats</h1>
+            <p className="text-gray-600">Manage your store products, orders, customers, testimonials, and homepage content</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Package className="h-8 w-8 text-amber-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Products</p>
+                    <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <ShoppingCart className="h-8 w-8 text-amber-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Orders</p>
+                    <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Users className="h-8 w-8 text-amber-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Users</p>
+                    <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <MessageSquare className="h-8 w-8 text-amber-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Testimonials</p>
+                    <p className="text-2xl font-bold text-gray-900">{testimonials.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="products" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
+              <TabsTrigger value="homepage">Homepage</TabsTrigger>
+              <TabsTrigger value="blogCategories">Manage Blog Categories</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="products" className="space-y-6">
+              {/* Add Product Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Add New Product
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Product Name</Label>
+                      <Input
+                        id="name"
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                        placeholder="Enter product name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="price">Price (₹)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                        placeholder="Enter price"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Select value={newProduct.category} onValueChange={(value) => setNewProduct({...newProduct, category: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="catalog_number">Catalog Number</Label>
+                      <Input
+                        id="catalog_number"
+                        value={newProduct.catalog_number}
+                        onChange={(e) => setNewProduct({...newProduct, catalog_number: e.target.value})}
+                        placeholder="Enter catalog number"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={newProduct.description}
+                        onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                        placeholder="Enter product description"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <ImageUpload
+                        images={newProduct.images}
+                        onImagesChange={(images) => setNewProduct({...newProduct, images})}
+                        maxImages={5}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rating">Rating (1-5)</Label>
+                      <Input
+                        id="rating"
+                        type="number"
+                        min="1"
+                        max="5"
+                        step="0.1"
+                        value={newProduct.rating}
+                        onChange={(e) => setNewProduct({...newProduct, rating: e.target.value})}
+                        placeholder="Enter rating"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="stock_quantity">Stock Quantity</Label>
+                      <Input
+                        id="stock_quantity"
+                        type="number"
+                        min="0"
+                        value={newProduct.stock_quantity}
+                        onChange={(e) => setNewProduct({...newProduct, stock_quantity: e.target.value})}
+                        placeholder="Enter stock quantity"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="in_stock"
+                          checked={newProduct.in_stock}
+                          onCheckedChange={(checked) => setNewProduct({...newProduct, in_stock: checked})}
+                        />
+                        <Label htmlFor="in_stock">In Stock</Label>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="featured"
+                          checked={newProduct.featured}
+                          onCheckedChange={(checked) => setNewProduct({...newProduct, featured: checked})}
+                        />
+                        <Label htmlFor="featured">Featured</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleAddProduct} 
+                    className="mt-4 bg-amber-600 hover:bg-amber-700"
+                    disabled={!newProduct.name || !newProduct.price || !newProduct.category}
+                  >
+                    Add Product
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Products List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Products ({products.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {products.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={product.images?.[0] || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'}
+                            alt={product.name}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <div>
+                            <h3 className="font-semibold">{product.name}</h3>
+                            <p className="text-sm text-gray-600">{product.category}</p>
+                            <p className="text-sm font-medium">₹{product.price}</p>
+                            <p className="text-xs text-gray-500">Stock: {product.stock_quantity || 0}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={product.in_stock ? "default" : "destructive"}>
+                            {product.in_stock ? "In Stock" : "Out of Stock"}
+                          </Badge>
+                          {product.featured && <Badge className="bg-amber-500">Featured</Badge>}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditProduct(product)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteProduct(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="orders" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Orders ({orders.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div key={order.id} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-semibold">Order #{order.order_number}</h3>
+                            <p className="text-sm text-gray-600">
+                              Customer: {order.customer_details?.name || 'N/A'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Total: ₹{order.total_amount}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Select
+                              value={order.order_status}
+                              onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="shipped">Shipped</SelectItem>
+                                <SelectItem value="delivered">Delivered</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Created: {new Date(order.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="users" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Users ({users.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {users.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <h3 className="font-semibold">{user.full_name || 'N/A'}</h3>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                          <p className="text-sm text-gray-600">{user.phone || 'No phone'}</p>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="testimonials" className="space-y-6">
+              {/* Add Testimonial Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Add New Testimonial
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="customer_name">Customer Name</Label>
+                      <Input
+                        id="customer_name"
+                        value={newTestimonial.customer_name}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, customer_name: e.target.value})}
+                        placeholder="Enter customer name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="customer_email">Customer Email (Optional)</Label>
+                      <Input
+                        id="customer_email"
+                        type="email"
+                        value={newTestimonial.customer_email}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, customer_email: e.target.value})}
+                        placeholder="Enter customer email"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rating">Rating (1-5)</Label>
+                      <Select value={newTestimonial.rating} onValueChange={(value) => setNewTestimonial({...newTestimonial, rating: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select rating" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Star</SelectItem>
+                          <SelectItem value="2">2 Stars</SelectItem>
+                          <SelectItem value="3">3 Stars</SelectItem>
+                          <SelectItem value="4">4 Stars</SelectItem>
+                          <SelectItem value="5">5 Stars</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_featured"
+                        checked={newTestimonial.is_featured}
+                        onCheckedChange={(checked) => setNewTestimonial({...newTestimonial, is_featured: checked})}
+                      />
+                      <Label htmlFor="is_featured">Featured</Label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label htmlFor="review_text">Review Text</Label>
+                      <Textarea
+                        id="review_text"
+                        value={newTestimonial.review_text}
+                        onChange={(e) => setNewTestimonial({...newTestimonial, review_text: e.target.value})}
+                        placeholder="Enter review text"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleAddTestimonial} 
+                    className="mt-4 bg-amber-600 hover:bg-amber-700"
+                    disabled={!newTestimonial.customer_name || !newTestimonial.rating || !newTestimonial.review_text}
+                  >
+                    Add Testimonial
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Testimonials List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Testimonials ({testimonials.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {testimonials.map((testimonial) => (
+                      <div key={testimonial.id} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold">{testimonial.customer_name}</h3>
+                              <div className="flex items-center">
+                                {[...Array(testimonial.rating)].map((_, i) => (
+                                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                                ))}
+                              </div>
+                              {testimonial.is_featured && <Badge className="bg-amber-500">Featured</Badge>}
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">"{testimonial.review_text}"</p>
+                            <p className="text-xs text-gray-500">
+                              {testimonial.customer_email && `Email: ${testimonial.customer_email} • `}
+                              Added: {new Date(testimonial.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleTestimonialFeatured(testimonial.id, testimonial.is_featured)}
+                            >
+                              {testimonial.is_featured ? 'Unfeature' : 'Feature'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteTestimonial(testimonial.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="homepage" className="space-y-6">
+              {/* Homepage Content Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="h-5 w-5" />
+                    Homepage Hero Section
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="hero_title">Hero Title</Label>
+                      <Input
+                        id="hero_title"
+                        value={newHomepageContent.hero_title}
+                        onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_title: e.target.value})}
+                        placeholder="Enter hero title"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="hero_subtitle">Hero Subtitle</Label>
+                      <Input
+                        id="hero_subtitle"
+                        value={newHomepageContent.hero_subtitle}
+                        onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_subtitle: e.target.value})}
+                        placeholder="Enter hero subtitle"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="hero_description">Hero Description</Label>
+                      <Textarea
+                        id="hero_description"
+                        value={newHomepageContent.hero_description}
+                        onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_description: e.target.value})}
+                        placeholder="Enter hero description"
+                        rows={4}
+                      />
+                    </div>
+
+                    <HomepageImageUpload
+                      currentImageUrl={newHomepageContent.hero_image_url}
+                      onImageChange={(imageUrl) => setNewHomepageContent({...newHomepageContent, hero_image_url: imageUrl})}
+                    />
+
+                    <div>
+                      <Label htmlFor="hero_image_url">Or Enter Image URL Manually</Label>
+                      <Input
+                        id="hero_image_url"
+                        value={newHomepageContent.hero_image_url}
+                        onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_image_url: e.target.value})}
+                        placeholder="Enter hero image URL"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleUpdateHomepageContent} 
+                    className="mt-4 bg-amber-600 hover:bg-amber-700"
+                    disabled={!newHomepageContent.hero_title || !newHomepageContent.hero_subtitle}
+                  >
+                    Update Homepage Content
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Current Homepage Content Preview */}
+              {homepageContent && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Homepage Content</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">{homepageContent.hero_title}</h3>
+                        <p className="text-amber-600 font-medium">{homepageContent.hero_subtitle}</p>
+                        <p className="text-gray-600 mt-2">{homepageContent.hero_description}</p>
+                      </div>
+                      <div>
+                        <img
+                          src={homepageContent.hero_image_url}
+                          alt="Current hero"
+                          className="w-full max-w-sm h-48 object-cover rounded border"
+                        />
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Last updated: {new Date(homepageContent.updated_at).toLocaleString()}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="blogCategories" className="space-y-6">
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>Manage Blog Categories</CardTitle>
+                  <CardDescription>
+                    Edit the images and text for each blog category. Click an image or text to edit, or upload a new image to replace an existing one.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {blogCatLoading ? (
+                    <div>Loading blog categories...</div>
+                  ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {blogCategories.map((cat, idx) => (
+                      <Card key={cat.key} className="mb-6">
+                        <CardHeader>
+                          <CardTitle>{cat.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex gap-4 flex-wrap mb-4">
+                            {(cat.images || Array(4).fill({ url: '', text: '' })).map((imgObj, i) => (
+                              <div key={i} className="flex flex-col items-center w-32">
+                                {imgObj.url ? (
+                                  <img src={imgObj.url} alt={cat.name + ' ' + (i+1)} className="w-28 h-28 object-cover rounded border mb-1 cursor-pointer" />
+                                ) : (
+                                  <ImageUpload
+                                    maxImages={1}
+                                    images={[]}
+                                    bucket="blog-category-images"
+                                    onImagesChange={urls => {
+                                      const updated = [...blogCategories];
+                                      const imgs = updated[idx].images ? [...updated[idx].images] : Array(4).fill({ url: '', text: '' });
+                                      imgs[i].url = urls[0] || '';
+                                      updated[idx].images = imgs;
+                                      setBlogCategories(updated);
+                                    }}
+                                  />
+                                )}
+                                <Input
+                                  className="mt-1"
+                                  placeholder="Image text/description"
+                                  value={imgObj.text}
+                                  onChange={e => {
+                                    const updated = [...blogCategories];
+                                    const imgs = updated[idx].images ? [...updated[idx].images] : Array(4).fill({ url: '', text: '' });
+                                    imgs[i].text = e.target.value;
+                                    updated[idx].images = imgs;
+                                    setBlogCategories(updated);
+                                  }}
+                                />
+                                {imgObj.url && (
+                                  <Button size="sm" variant="destructive" className="mt-1"
+                                    onClick={() => {
+                                      const updated = [...blogCategories];
+                                      const imgs = updated[idx].images ? [...updated[idx].images] : Array(4).fill({ url: '', text: '' });
+                                      imgs[i] = { url: '', text: '' };
+                                      updated[idx].images = imgs;
+                                      setBlogCategories(updated);
+                                    }}
+                                  >Remove</Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <Label>Category Description (for homepage)</Label>
+                          <Textarea
+                            value={cat.description || ''}
+                            onChange={e => {
+                              const updated = [...blogCategories];
+                              updated[idx].description = e.target.value;
+                              setBlogCategories(updated);
+                            }}
+                          />
+                          <Button
+                            onClick={async () => {
+                              setBlogCatLoading(true);
+                              const { error } = await (supabase as any).from('blog_categories').update({
+                                images: cat.images,
+                                description: cat.description
+                              }).eq('id', cat.id);
+                              setBlogCatLoading(false);
+                              if (!error) {
+                                toast({ title: 'Saved!', description: cat.name + ' updated.' });
+                              } else {
+                                toast({ title: 'Error', description: error.message, variant: 'destructive' });
+                              }
+                            }}
+                            className="mt-2"
+                          >Save</Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <Footer />
+      </div>
+    </CartProvider>
+  );
+};
+
+export default Admin;
