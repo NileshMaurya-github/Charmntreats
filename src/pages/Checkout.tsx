@@ -12,6 +12,13 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+// Add Razorpay type to window for TypeScript
+declare global {
+  interface Window {
+    Razorpay?: any;
+  }
+}
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -33,7 +40,10 @@ const Checkout = () => {
   // Razorpay script loader
   function loadRazorpayScript(src: string) {
     return new Promise((resolve) => {
+      if (typeof window === 'undefined') return resolve(false);
+      if (document.getElementById('razorpay-script')) return resolve(true);
       const script = document.createElement('script');
+      script.id = 'razorpay-script';
       script.src = src;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
@@ -108,17 +118,20 @@ const Checkout = () => {
       try {
         const { error: orderError } = await supabase
           .from('orders')
-          .insert({
-            order_number: orderId,
-            customer_details: formData,
-            items: orderItems,
-            total_amount: totalAmount,
-            payment_method: formData.paymentMethod,
-            order_status: 'pending',
-            payment_status: 'pending'
-          });
+          .insert([
+            {
+              order_number: orderId,
+              customer_details: formData,
+              items: orderItems,
+              total_amount: totalAmount,
+              payment_method: formData.paymentMethod,
+              order_status: 'pending',
+              payment_status: 'pending'
+            }
+          ]);
         if (orderError) {
           toast({ title: 'Order Failed', description: 'Failed to place order. Please try again.', variant: 'destructive' });
+          setIsProcessing(false);
           return;
         }
         clearCart();
@@ -146,27 +159,33 @@ const Checkout = () => {
         name: 'Charmntreats',
         description: 'Order Payment',
         handler: async function (response: any) {
-          // Save order as paid
-          const { error: orderError } = await supabase
-            .from('orders')
-            .insert({
-              order_number: orderId,
-              customer_details: formData,
-              items: orderItems,
-              total_amount: totalAmount,
-              payment_method: 'RAZORPAY',
-              order_status: 'pending',
-              payment_status: 'paid',
-              razorpay_payment_id: response.razorpay_payment_id
-            });
-          if (orderError) {
-            toast({ title: 'Order Failed', description: 'Failed to save order after payment.', variant: 'destructive' });
+          try {
+            const { error: orderError } = await supabase
+              .from('orders')
+              .insert([
+                {
+                  order_number: orderId,
+                  customer_details: formData,
+                  items: orderItems,
+                  total_amount: totalAmount,
+                  payment_method: 'RAZORPAY',
+                  order_status: 'pending',
+                  payment_status: 'paid',
+                  razorpay_payment_id: response.razorpay_payment_id
+                }
+              ]);
+            if (orderError) {
+              toast({ title: 'Order Failed', description: 'Failed to save order after payment.', variant: 'destructive' });
+              setIsProcessing(false);
+              return;
+            }
+            clearCart();
+            toast({ title: 'Payment Successful!', description: `Your order ${orderId} has been placed.` });
+            navigate('/', { replace: true });
+          } catch (error) {
+            toast({ title: 'Order Failed', description: 'An unexpected error occurred after payment.', variant: 'destructive' });
             setIsProcessing(false);
-            return;
           }
-          clearCart();
-          toast({ title: 'Payment Successful!', description: `Your order ${orderId} has been placed.` });
-          navigate('/', { replace: true });
         },
         prefill: {
           name: formData.name,
@@ -176,8 +195,12 @@ const Checkout = () => {
         theme: { color: '#f59e42' }
       };
       // @ts-ignore
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      if (typeof window !== 'undefined' && window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        toast({ title: 'Payment Error', description: 'Razorpay is not available.', variant: 'destructive' });
+      }
       setIsProcessing(false);
       return;
     }
@@ -188,7 +211,7 @@ const Checkout = () => {
   }, []);
 
   // Debug panel for cart troubleshooting
-  const debugCart = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('cart') ?? '' : '';
+  const debugCart = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem('cart') ?? '' : '';
 
   if (cartItems.length === 0) {
     return (
