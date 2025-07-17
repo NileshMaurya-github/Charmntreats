@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, Upload, Plus } from 'lucide-react';
+import { X, Upload, Plus, Image as ImageIcon, Link } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
@@ -17,6 +17,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   maxImages = 5 
 }) => {
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const addImageUrl = () => {
@@ -58,6 +60,65 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     });
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    if (images.length >= maxImages) {
+      toast({
+        title: "Maximum Images Reached",
+        description: `You can only add up to ${maxImages} images.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const file = files[0];
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert file to base64 data URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        onImagesChange([...images, result]);
+        toast({
+          title: "Image Uploaded",
+          description: "Local image has been added successfully.",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   const removeImage = (index: number) => {
     const updatedImages = images.filter((_, i) => i !== index);
     onImagesChange(updatedImages);
@@ -71,24 +132,77 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     <div className="space-y-4">
       <Label>Product Images (Max {maxImages})</Label>
       
-      {/* Add new image URL */}
-      <div className="flex gap-2">
-        <Input
-          value={newImageUrl}
-          onChange={(e) => setNewImageUrl(e.target.value)}
-          placeholder="Enter image URL (https://...)"
-          className="flex-1"
-        />
+      {/* Upload method selection */}
+      <div className="flex gap-2 mb-4">
         <Button
           type="button"
-          onClick={addImageUrl}
-          disabled={images.length >= maxImages}
-          className="bg-amber-600 hover:bg-amber-700"
+          variant={uploadMethod === 'url' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setUploadMethod('url')}
+          className="flex items-center"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add
+          <Link className="h-4 w-4 mr-2" />
+          URL
+        </Button>
+        <Button
+          type="button"
+          variant={uploadMethod === 'file' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setUploadMethod('file')}
+          className="flex items-center"
+        >
+          <ImageIcon className="h-4 w-4 mr-2" />
+          Upload File
         </Button>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        style={{ display: 'none' }}
+      />
+
+      {/* URL input method */}
+      {uploadMethod === 'url' && (
+        <div className="flex gap-2">
+          <Input
+            value={newImageUrl}
+            onChange={(e) => setNewImageUrl(e.target.value)}
+            placeholder="Enter image URL (https://...)"
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            onClick={addImageUrl}
+            disabled={images.length >= maxImages}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add URL
+          </Button>
+        </div>
+      )}
+
+      {/* File upload method */}
+      {uploadMethod === 'file' && (
+        <div className="space-y-2">
+          <Button
+            type="button"
+            onClick={triggerFileUpload}
+            disabled={images.length >= maxImages}
+            className="bg-green-600 hover:bg-green-700 w-full"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Choose Image File
+          </Button>
+          <p className="text-sm text-gray-500">
+            Supported formats: JPG, PNG, GIF, WebP (Max 5MB)
+          </p>
+        </div>
+      )}
 
       {/* Display current images */}
       {images.length > 0 && (

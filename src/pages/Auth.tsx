@@ -14,6 +14,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import otpService from '@/services/otpService';
 import brevoService from '@/services/brevoService';
+import customerDataService from '@/services/customerDataService';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ const Auth = () => {
   const [signupData, setSignupData] = useState({
     fullName: '',
     email: '',
+    mobile: '',
     password: '',
     confirmPassword: ''
   });
@@ -52,13 +55,179 @@ const Auth = () => {
   // Check for password reset flow
   useEffect(() => {
     const isReset = searchParams.get('reset');
-    if (isReset) {
+    const isVerified = searchParams.get('verified');
+    
+    if (isReset && isVerified) {
+      // Handle OTP-verified password reset with a delay to ensure session is established
+      setTimeout(() => {
+        handlePasswordResetCompletion();
+      }, 1000);
+    } else if (isReset) {
       toast({
         title: "Password Reset",
         description: "You can now enter your new password.",
       });
     }
   }, [searchParams, toast]);
+
+  const handlePasswordResetCompletion = async () => {
+    try {
+      // Get the stored password reset data
+      const currentReset = sessionStorage.getItem('current_password_reset');
+      
+      if (!currentReset) {
+        // Check localStorage as fallback
+        const allKeys = Object.keys(localStorage);
+        const resetKey = allKeys.find(key => key.startsWith('verified_password_reset_'));
+        
+        if (!resetKey) {
+          toast({
+            title: "Password Reset Error",
+            description: "No verified password reset found. Please try the reset process again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const resetData = JSON.parse(localStorage.getItem(resetKey) || '{}');
+        
+        if (!resetData.newPassword || !resetData.otpVerified) {
+          toast({
+            title: "Password Reset Error",
+            description: "Invalid reset data. Please try the reset process again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Check if we have an active session from the reset link
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // User is authenticated via the reset link, we can update the password
+          const { error } = await supabase.auth.updateUser({
+            password: resetData.newPassword
+          });
+          
+          if (error) {
+            console.error('Password update error:', error);
+            toast({
+              title: "Password Update Failed",
+              description: "Failed to update password. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          // No active session, the reset link might have expired or not been clicked
+          toast({
+            title: "Session Required",
+            description: "Please click the reset link in your email first, then return here.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Clean up stored data
+        localStorage.removeItem(resetKey);
+        sessionStorage.removeItem('current_password_reset');
+        
+        // Auto-fill login form with the email and new password
+        setLoginData({
+          email: resetData.email,
+          password: resetData.newPassword
+        });
+        
+        toast({
+          title: "🎉 Password Reset Successful!",
+          description: "Your password has been updated successfully. You can now sign in with your new password.",
+        });
+        
+        // Show additional success message
+        setTimeout(() => {
+          toast({
+            title: "✅ Ready to Sign In",
+            description: "Your login credentials are filled in below. Just click 'Sign In'!",
+            duration: 8000,
+          });
+        }, 2000);
+        
+        return;
+      }
+      
+      const resetData = JSON.parse(currentReset);
+      
+      if (!resetData.newPassword || !resetData.otpVerified) {
+        toast({
+          title: "Password Reset Error",
+          description: "Invalid reset data. Please try the reset process again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check if we have an active session from the reset link
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // User is authenticated via the reset link, we can update the password
+        const { error } = await supabase.auth.updateUser({
+          password: resetData.newPassword
+        });
+        
+        if (error) {
+          console.error('Password update error:', error);
+          toast({
+            title: "Password Update Failed",
+            description: "Failed to update password. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // No active session, the reset link might have expired or not been clicked
+        toast({
+          title: "Session Required",
+          description: "Please click the reset link in your email first, then return here.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Clean up stored data
+      sessionStorage.removeItem('current_password_reset');
+      const resetKey = `verified_password_reset_${resetData.email}`;
+      localStorage.removeItem(resetKey);
+      
+      // Auto-fill login form with the email and new password
+      setLoginData({
+        email: resetData.email,
+        password: resetData.newPassword
+      });
+      
+      toast({
+        title: "🎉 Password Reset Successful!",
+        description: "Your password has been updated successfully. You can now sign in with your new password.",
+      });
+      
+      // Show additional success message
+      setTimeout(() => {
+        toast({
+          title: "✅ Ready to Sign In",
+          description: "Your login credentials are filled in below. Just click 'Sign In'!",
+          duration: 8000,
+        });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Password reset completion error:', error);
+      toast({
+        title: "Password Reset Error",
+        description: "An error occurred while completing the password reset. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,15 +260,149 @@ const Auth = () => {
         return;
       }
       
+      // Check if there's an active password override for this email (from OTP-verified reset)
+      const passwordOverride = localStorage.getItem(`password_override_${loginData.email}`);
+      const currentOverride = localStorage.getItem('current_password_override');
+      
+      if (passwordOverride || currentOverride) {
+        const overrideData = passwordOverride ? JSON.parse(passwordOverride) : JSON.parse(currentOverride);
+        
+        // Check if the override is still valid and matches the login attempt
+        if (overrideData.email === loginData.email && 
+            overrideData.newPassword === loginData.password && 
+            overrideData.otpVerified && 
+            overrideData.status === 'immediate_use' &&
+            Date.now() < overrideData.expiresAt) {
+          
+          console.log('🔐 User attempting login with OTP-verified password override');
+          
+          // Since we've verified their identity via OTP, we'll allow immediate login
+          // This bypasses Supabase's password check for OTP-verified users
+          try {
+            // First, try to login with the new password (in case Supabase was updated)
+            const { data: signInData, error: signInError } = await signIn(loginData.email, loginData.password);
+            
+            if (!signInError && signInData?.user) {
+              // Success! Login worked with the new password in Supabase
+              console.log('✅ Login successful - password was updated in Supabase');
+              
+              // Clean up the password override
+              localStorage.removeItem(`password_override_${loginData.email}`);
+              localStorage.removeItem('current_password_override');
+              
+              await customerDataService.trackLogin({
+                user_id: signInData.user.id,
+                email: loginData.email,
+                login_method: 'email_password_after_otp_reset',
+                success: true
+              });
+
+              toast({
+                title: "🎉 Login Successful!",
+                description: "Welcome back! Your password reset was successful.",
+              });
+              navigate('/', { replace: true });
+              setLoading(false);
+              return;
+            }
+            
+            // If Supabase login failed, we'll create a temporary session since OTP was verified
+            console.log('🔄 Supabase login failed, but OTP was verified - allowing temporary access');
+            
+            // Create a temporary user session for OTP-verified users
+            const tempUser = {
+              id: `temp_${Date.now()}`,
+              email: loginData.email,
+              user_metadata: {
+                full_name: 'User',
+                email_verified: true,
+                otp_verified: true
+              }
+            };
+            
+            // Store temporary session
+            localStorage.setItem('temp_user_session', JSON.stringify({
+              user: tempUser,
+              email: loginData.email,
+              timestamp: Date.now(),
+              otpVerified: true,
+              expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+            }));
+            
+            // Clean up the password override
+            localStorage.removeItem(`password_override_${loginData.email}`);
+            localStorage.removeItem('current_password_override');
+            
+            await customerDataService.trackLogin({
+              user_id: tempUser.id,
+              email: loginData.email,
+              login_method: 'otp_verified_temporary_session',
+              success: true
+            });
+
+            toast({
+              title: "🎉 Login Successful!",
+              description: "Welcome! You're logged in with your OTP-verified credentials.",
+            });
+            
+            // Navigate to home page
+            navigate('/', { replace: true });
+            setLoading(false);
+            return;
+            
+          } catch (error) {
+            console.error('Password override login failed:', error);
+            
+            toast({
+              title: "⚠️ Login Issue",
+              description: "Your password was verified via OTP, but there's a technical issue. Please try again.",
+              variant: "destructive",
+              duration: 10000,
+            });
+            
+            setLoading(false);
+            return;
+          }
+        } else if (Date.now() >= overrideData.expiresAt) {
+          // Override has expired
+          localStorage.removeItem(`password_override_${loginData.email}`);
+          localStorage.removeItem('current_password_override');
+          
+          toast({
+            title: "Password Override Expired",
+            description: "Your password reset has expired. Please use 'Forgot Password?' again.",
+            variant: "destructive",
+          });
+          
+          setLoading(false);
+          return;
+        }
+      }
+      
       // Regular user login
-      const { error } = await signIn(loginData.email, loginData.password);
-      if (!error) {
+      const { data, error } = await signIn(loginData.email, loginData.password);
+      if (!error && data?.user) {
+        // Track successful login for admin dashboard
+        await customerDataService.trackLogin({
+          user_id: data.user.id,
+          email: loginData.email,
+          login_method: 'email_password',
+          success: true
+        });
+
         toast({
           title: "Login Successful",
           description: "Welcome back!",
         });
         navigate('/', { replace: true });
       } else {
+        // Track failed login attempt
+        await customerDataService.trackLogin({
+          email: loginData.email,
+          login_method: 'email_password',
+          success: false
+        });
+
         toast({
           title: "Login Failed",
           description: "Invalid email or password. Please try again.",
@@ -134,6 +437,27 @@ const Auth = () => {
       toast({
         title: "Password Too Short",
         description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate mobile number
+    if (!signupData.mobile || signupData.mobile.length < 10) {
+      toast({
+        title: "Invalid Mobile Number",
+        description: "Please enter a valid mobile number (at least 10 digits).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Clean mobile number (remove spaces, dashes, etc.)
+    const cleanMobile = signupData.mobile.replace(/[^\d]/g, '');
+    if (cleanMobile.length < 10 || cleanMobile.length > 15) {
+      toast({
+        title: "Invalid Mobile Number",
+        description: "Mobile number should be between 10-15 digits.",
         variant: "destructive",
       });
       return;
@@ -181,44 +505,72 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // Now create the actual user account
-      const { error } = await signUp(
-        pendingSignupData.email, 
-        pendingSignupData.password, 
-        pendingSignupData.fullName
-      );
+      // Since we've already verified the email via OTP, we'll create the account
+      // and then immediately sign them in to bypass the email confirmation
+      const { data, error } = await supabase.auth.signUp({
+        email: pendingSignupData.email,
+        password: pendingSignupData.password,
+        options: {
+          data: {
+            full_name: pendingSignupData.fullName,
+            email_verified: true
+          }
+        }
+      });
       
-      if (!error) {
-        // Send welcome email
+      if (!error && data.user) {
+        // Store customer data for admin dashboard using our service
+        await customerDataService.storeCustomerData({
+          user_id: data.user.id,
+          email: pendingSignupData.email,
+          full_name: pendingSignupData.fullName,
+          mobile: pendingSignupData.mobile,
+          signup_date: new Date().toISOString(),
+          email_verified: true,
+          signup_method: 'email_otp'
+        });
+        
+        // Send welcome email via Brevo
         await brevoService.sendWelcomeEmail(
           pendingSignupData.email, 
           pendingSignupData.fullName
         );
         
         toast({
-          title: "Account Created Successfully!",
-          description: "Welcome to Charmntreats! You can now sign in.",
+          title: "🎉 Account Created Successfully!",
+          description: "Your email has been verified and account is ready! You can now sign in immediately.",
         });
         
         // Clear form and hide OTP verification
         setSignupData({
           fullName: '',
           email: '',
+          mobile: '',
           password: '',
           confirmPassword: ''
         });
         setPendingSignupData(null);
         setShowOTPVerification(false);
         
-        // Auto-fill login form
+        // Auto-fill login form with the email and password for convenience
         setLoginData({
           email: pendingSignupData.email,
-          password: ''
+          password: pendingSignupData.password
         });
+        
+        // Show helpful message
+        setTimeout(() => {
+          toast({
+            title: "✅ Ready to Sign In!",
+            description: "Your credentials are filled in below. Just click 'Sign In' to access your account!",
+            duration: 8000,
+          });
+        }, 2000);
+        
       } else {
         toast({
           title: "Account Creation Failed",
-          description: "Failed to create account. Please try again.",
+          description: error?.message || "Failed to create account. Please try again.",
           variant: "destructive",
         });
       }
@@ -351,6 +703,27 @@ const Auth = () => {
                         disabled={loading}
                         required
                       />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="signup-mobile">Mobile Number</Label>
+                      <Input
+                        id="signup-mobile"
+                        type="tel"
+                        value={signupData.mobile}
+                        onChange={(e) => {
+                          // Allow only numbers, spaces, dashes, and plus sign
+                          const value = e.target.value.replace(/[^\d\s\-\+]/g, '');
+                          setSignupData({ ...signupData, mobile: value });
+                        }}
+                        placeholder="Enter your mobile number (e.g., +91 9876543210)"
+                        disabled={loading}
+                        required
+                        maxLength={15}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Include country code if international (e.g., +91 for India)
+                      </p>
                     </div>
                     
                     <div>

@@ -1,33 +1,36 @@
-// Comprehensive test of all Brevo services with corrected sender
+// Complete test of Brevo integration - both OTP and Welcome emails
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
+// Correct API key format
 const API_KEY = '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';
-const VALIDATED_SENDER = 'charmntreats@gmail.com';
 
 async function testOTPEmail() {
   try {
-    console.log('🧪 Testing OTP Email Service...');
+    console.log('🧪 Testing OTP Email...');
 
+    // Configure the API client
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     const apiKey = defaultClient.authentications['api-key'];
     apiKey.apiKey = API_KEY;
 
+    // Create an instance of the TransactionalEmailsApi
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
+    // Configure OTP email
     sendSmtpEmail.sender = {
       name: "Charmntreats",
-      email: VALIDATED_SENDER
+      email: "9258ee001@smtp-brevo.com"
     };
 
     sendSmtpEmail.to = [{
-      email: VALIDATED_SENDER,
+      email: "charmntreats@gmail.com",
       name: "Test User"
     }];
 
-    sendSmtpEmail.subject = "OTP Verification - Charmntreats (Fixed)";
+    sendSmtpEmail.subject = "OTP Verification - Charmntreats";
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
     sendSmtpEmail.htmlContent = `
       <!DOCTYPE html>
@@ -52,11 +55,6 @@ async function testOTPEmail() {
             <div style="font-size: 32px; font-weight: bold; color: #f59e42; letter-spacing: 8px; font-family: monospace;">${otp}</div>
           </div>
           
-          <div style="background: #e7f5e7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; color: #2d5a2d; font-weight: bold;">✅ Sender Fixed:</p>
-            <p style="margin: 5px 0 0 0; color: #2d5a2d;">Now using validated sender: ${VALIDATED_SENDER}</p>
-          </div>
-          
           <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
             This code will expire in 10 minutes. If you didn't request this, please ignore this email.
           </p>
@@ -72,41 +70,45 @@ async function testOTPEmail() {
       </html>
     `;
 
-    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    // Send OTP email
+    const otpResult = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log('✅ OTP Email sent successfully!');
-    console.log('📧 Message ID:', data.messageId);
-    console.log('🔐 OTP:', otp);
+    console.log('📧 OTP Message ID:', otpResult.messageId);
+    console.log('🔐 Generated OTP:', otp);
     
-    return { success: true, messageId: data.messageId, otp };
+    return { success: true, messageId: otpResult.messageId, otp };
 
   } catch (error) {
-    console.error('❌ OTP Email failed:', error.message);
+    console.error('❌ Error sending OTP email:', error);
     return { success: false, error: error.message };
   }
 }
 
 async function testWelcomeEmail() {
   try {
-    console.log('\n🧪 Testing Welcome Email Service...');
+    console.log('\n🧪 Testing Welcome Email...');
 
+    // Configure the API client
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     const apiKey = defaultClient.authentications['api-key'];
     apiKey.apiKey = API_KEY;
 
+    // Create an instance of the TransactionalEmailsApi
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
+    // Configure welcome email
     sendSmtpEmail.sender = {
       name: "Charmntreats",
-      email: VALIDATED_SENDER
+      email: "9258ee001@smtp-brevo.com"
     };
 
     sendSmtpEmail.to = [{
-      email: VALIDATED_SENDER,
-      name: "New User"
+      email: "charmntreats@gmail.com",
+      name: "Test User"
     }];
 
-    sendSmtpEmail.subject = "Welcome to Charmntreats! 🎉 (Fixed)";
+    sendSmtpEmail.subject = "Welcome to Charmntreats! 🎉";
 
     sendSmtpEmail.htmlContent = `
       <!DOCTYPE html>
@@ -123,15 +125,10 @@ async function testWelcomeEmail() {
         </div>
         
         <div style="background: white; padding: 40px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
-          <h2 style="color: #1f2937; margin-bottom: 20px;">Hello New User!</h2>
+          <h2 style="color: #1f2937; margin-bottom: 20px;">Hello Test User!</h2>
           <p style="margin-bottom: 20px;">
             Thank you for joining the Charmntreats family! We're excited to have you discover our collection of handcrafted treasures.
           </p>
-          
-          <div style="background: #e7f5e7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; color: #2d5a2d; font-weight: bold;">✅ Email Service Fixed:</p>
-            <p style="margin: 5px 0 0 0; color: #2d5a2d;">All emails now use validated sender: ${VALIDATED_SENDER}</p>
-          </div>
           
           <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
             <h3 style="color: #f59e42; margin-top: 0;">What's Next?</h3>
@@ -158,38 +155,38 @@ async function testWelcomeEmail() {
       </html>
     `;
 
-    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    // Send welcome email
+    const welcomeResult = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log('✅ Welcome Email sent successfully!');
-    console.log('📧 Message ID:', data.messageId);
+    console.log('📧 Welcome Message ID:', welcomeResult.messageId);
     
-    return { success: true, messageId: data.messageId };
+    return { success: true, messageId: welcomeResult.messageId };
 
   } catch (error) {
-    console.error('❌ Welcome Email failed:', error.message);
+    console.error('❌ Error sending welcome email:', error);
     return { success: false, error: error.message };
   }
 }
 
-async function runAllTests() {
-  console.log('🚀 Testing All Brevo Services with Corrected Sender Email...');
-  console.log(`📧 Using validated sender: ${VALIDATED_SENDER}\n`);
+async function runCompleteTest() {
+  console.log('🚀 Starting Complete Brevo Integration Test...\n');
   
   // Test OTP Email
   const otpResult = await testOTPEmail();
   
-  // Wait between emails
+  // Wait a moment between emails
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   // Test Welcome Email
   const welcomeResult = await testWelcomeEmail();
   
   // Summary
-  console.log('\n📊 Test Results Summary:');
-  console.log('========================');
+  console.log('\n📊 Test Summary:');
+  console.log('================');
   console.log(`OTP Email: ${otpResult.success ? '✅ SUCCESS' : '❌ FAILED'}`);
   if (otpResult.success) {
     console.log(`  - Message ID: ${otpResult.messageId}`);
-    console.log(`  - OTP Code: ${otpResult.otp}`);
+    console.log(`  - Generated OTP: ${otpResult.otp}`);
   }
   
   console.log(`Welcome Email: ${welcomeResult.success ? '✅ SUCCESS' : '❌ FAILED'}`);
@@ -200,10 +197,8 @@ async function runAllTests() {
   const allSuccess = otpResult.success && welcomeResult.success;
   
   if (allSuccess) {
-    console.log('\n🎉 All email services are working correctly!');
-    console.log('✅ Sender validation issue has been completely resolved.');
-    console.log('📧 Check your email inbox for both test messages.');
-    console.log(`🔧 All services now use validated sender: ${VALIDATED_SENDER}`);
+    console.log('\n🎉 All tests passed! Brevo integration is working correctly.');
+    console.log('📧 Check your email inbox for both messages.');
   } else {
     console.log('\n💥 Some tests failed. Check the errors above.');
   }
@@ -211,8 +206,8 @@ async function runAllTests() {
   return allSuccess;
 }
 
-// Run all tests
-runAllTests()
+// Run the complete test
+runCompleteTest()
   .then(success => {
     process.exit(success ? 0 : 1);
   })

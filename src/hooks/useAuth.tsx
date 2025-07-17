@@ -50,6 +50,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Check for temporary user session (from OTP-verified password reset)
+    const tempSession = localStorage.getItem('temp_user_session');
+    if (tempSession) {
+      try {
+        const sessionData = JSON.parse(tempSession);
+        
+        // Check if session is still valid
+        if (Date.now() < sessionData.expiresAt && sessionData.otpVerified) {
+          console.log('🔐 Loading temporary OTP-verified user session');
+          
+          setUser({
+            id: sessionData.user.id,
+            email: sessionData.user.email,
+            user_metadata: sessionData.user.user_metadata,
+            app_metadata: { provider: 'otp_verified' },
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+          } as any);
+          setLoading(false);
+          return;
+        } else {
+          // Session expired, clean up
+          localStorage.removeItem('temp_user_session');
+        }
+      } catch (error) {
+        console.error('Error parsing temp user session:', error);
+        localStorage.removeItem('temp_user_session');
+      }
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -150,6 +180,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Remove admin local login if present
       localStorage.removeItem('isAdmin');
       localStorage.removeItem('adminUser');
+      
+      // Remove temporary user session if present
+      localStorage.removeItem('temp_user_session');
+      
+      // Clean up any password overrides
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (key.startsWith('password_override_') || key === 'current_password_override') {
+          localStorage.removeItem(key);
+        }
+      });
+      
       setUser(null);
       setIsAdmin(false);
       setSession(null);

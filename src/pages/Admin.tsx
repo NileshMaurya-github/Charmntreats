@@ -17,6 +17,8 @@ import Footer from '@/components/Footer';
 import ImageUpload from '@/components/ImageUpload';
 import HomepageImageUpload from '@/components/HomepageImageUpload';
 import EditProductDialog from '@/components/EditProductDialog';
+import CustomerDataSection from '@/components/CustomerDataSection';
+import customerDataService from '@/services/customerDataService';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -26,6 +28,8 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [homepageContent, setHomepageContent] = useState(null);
+  const [customerData, setCustomerData] = useState([]);
+  const [loginHistory, setLoginHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -482,10 +486,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="homepage">Homepage</TabsTrigger>
           </TabsList>
@@ -719,28 +723,8 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Users ({users.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-semibold">{user.full_name || 'N/A'}</h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-sm text-gray-600">{user.phone || 'No phone'}</p>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Joined: {new Date(user.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="customers" className="space-y-6">
+            <CustomerDataSection />
           </TabsContent>
 
           <TabsContent value="testimonials" className="space-y-6">

@@ -37,21 +37,21 @@ class OTPService {
       const emailSent = await brevoService.sendOTPEmail(email, otp, type);
       console.log('📧 Email send result:', emailSent);
 
-      // Always return success for development, but show OTP in console and message
-      console.log('✅ OTP generated successfully for:', email);
-      console.log('🔐 USE THIS OTP CODE:', otp);
-      
-      // Show a prominent alert with the OTP for development
-      if (typeof window !== 'undefined') {
-        setTimeout(() => {
-          alert(`🔐 DEVELOPMENT MODE\n\nYour OTP code is: ${otp}\n\nEmail: ${email}\nType: ${type}\n\nUse this code to verify your account.\n\n(Check console for details)`);
-        }, 1000);
+      if (emailSent) {
+        console.log('✅ OTP email sent successfully to:', email);
+        console.log('🔐 OTP Code (for debugging):', otp);
+        return {
+          success: true,
+          message: 'OTP sent successfully to your email address. Please check your inbox and spam folder.'
+        };
+      } else {
+        console.error('❌ Failed to send OTP email to:', email);
+        console.log('🔐 OTP Code (for debugging):', otp);
+        return {
+          success: false,
+          message: `Failed to send OTP email. Please try again. [Debug: OTP is ${otp}]`
+        };
       }
-
-      return {
-        success: true,
-        message: `OTP sent to ${email}. ${emailSent ? 'Check your email inbox and spam folder.' : 'Email delivery may be delayed.'} [DEV: Check browser alert or console for OTP code]`
-      };
     } catch (error) {
       console.error('Error generating OTP:', error);
       return {

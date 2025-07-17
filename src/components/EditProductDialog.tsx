@@ -29,7 +29,7 @@ interface EditProductDialogProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onProductUpdated: () => void;
+  onSave: (updatedProduct: Product) => void;
 }
 
 const categories = [
@@ -48,7 +48,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   product,
   isOpen,
   onClose,
-  onProductUpdated
+  onSave
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -84,51 +84,26 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     }
   }, [product]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
 
-    setLoading(true);
-    try {
-      const updateData = {
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        category: formData.category,
-        catalog_number: formData.catalog_number,
-        images: formData.images.length > 0 ? formData.images : ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
-        in_stock: formData.in_stock,
-        featured: formData.featured,
-        rating: formData.rating ? parseFloat(formData.rating) : null,
-        reviews: formData.reviews ? parseInt(formData.reviews) : null,
-        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : null,
-        updated_at: new Date().toISOString()
-      };
+    const updatedProduct = {
+      ...product,
+      name: formData.name,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      category: formData.category,
+      catalog_number: formData.catalog_number,
+      images: formData.images.length > 0 ? formData.images : ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
+      in_stock: formData.in_stock,
+      featured: formData.featured,
+      rating: formData.rating ? parseFloat(formData.rating) : undefined,
+      reviews: formData.reviews ? parseInt(formData.reviews) : undefined,
+      stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : undefined
+    };
 
-      const { error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', product.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product updated successfully!",
-      });
-
-      onProductUpdated();
-      onClose();
-    } catch (error) {
-      console.error('Error updating product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update product. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    onSave(updatedProduct);
   };
 
   const handleInputChange = (field: string, value: any) => {
