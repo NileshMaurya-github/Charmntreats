@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,6 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
-import { CartProvider } from '@/contexts/CartContext';
 
 const ProductsPage = () => {
   const [searchParams] = useSearchParams();
@@ -68,8 +67,13 @@ const ProductsPage = () => {
       }
 
       const { data, error } = await query;
+      console.log('Supabase URL:', SUPABASE_URL);
+      console.log('Fetched products:', data, 'Error:', error, 'Category filter:', filterCategory);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       // Transform the data to match our Product interface
       const transformedProducts: Product[] = (data || []).map(product => ({
@@ -231,13 +235,4 @@ const ProductsPage = () => {
   );
 };
 
-// Wrap with CartProvider
-const Products = () => {
-  return (
-    <CartProvider>
-      <ProductsPage />
-    </CartProvider>
-  );
-};
-
-export default Products;
+export default ProductsPage;

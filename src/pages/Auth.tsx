@@ -9,8 +9,11 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import ForgotPasswordDialog from '@/components/ForgotPasswordDialog';
+import OTPVerification from '@/components/OTPVerification';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import otpService from '@/services/otpService';
+import brevoService from '@/services/brevoService';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -22,6 +25,10 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpType, setOtpType] = useState<'signup' | 'reset'>('signup');
+  const [pendingSignupData, setPendingSignupData] = useState<any>(null);
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -56,23 +63,56 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Hardcoded admin login
-    if (
-      loginData.email === 'nileshmaurya2020@gmail.com' &&
-      loginData.password === 'Dn@#112233'
-    ) {
-      localStorage.setItem('isAdmin', 'true');
-      navigate('/admin', { replace: true });
-      setLoading(false);
-      return;
-    }
+    
     try {
+      // Hardcoded admin login
+      if (
+        loginData.email === 'nileshmaurya2020@gmail.com' &&
+        loginData.password === 'Dn@#112233'
+      ) {
+        localStorage.setItem('isAdmin', 'true');
+        localStorage.setItem('adminUser', JSON.stringify({
+          id: 'admin-local',
+          email: 'nileshmaurya2020@gmail.com',
+          role: 'admin'
+        }));
+        
+        toast({
+          title: "Admin Login Successful",
+          description: "Welcome to the admin dashboard!",
+        });
+        
+        // Small delay to show the toast
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+        }, 1000);
+        
+        setLoading(false);
+        return;
+      }
+      
+      // Regular user login
       const { error } = await signIn(loginData.email, loginData.password);
       if (!error) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
         navigate('/', { replace: true });
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Sign in error:', error);
+      toast({
+        title: "Login Error",
+        description: "An error occurred during login. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -102,21 +142,102 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      const { error } = await signUp(signupData.email, signupData.password, signupData.fullName);
+      // Send OTP for email verification
+      const otpResult = await otpService.generateAndSendOTP(signupData.email, 'signup');
+      
+      if (otpResult.success) {
+        // Store signup data for later use after OTP verification
+        setPendingSignupData(signupData);
+        setOtpEmail(signupData.email);
+        setOtpType('signup');
+        setShowOTPVerification(true);
+        
+        toast({
+          title: "Verification Code Sent",
+          description: "Please check your email for the verification code.",
+        });
+      } else {
+        toast({
+          title: "Failed to Send Code",
+          description: otpResult.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      toast({
+        title: "Signup Error",
+        description: "An error occurred during signup. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOTPVerificationSuccess = async () => {
+    if (!pendingSignupData) return;
+    
+    setLoading(true);
+    
+    try {
+      // Now create the actual user account
+      const { error } = await signUp(
+        pendingSignupData.email, 
+        pendingSignupData.password, 
+        pendingSignupData.fullName
+      );
+      
       if (!error) {
-        // Clear form
+        // Send welcome email
+        await brevoService.sendWelcomeEmail(
+          pendingSignupData.email, 
+          pendingSignupData.fullName
+        );
+        
+        toast({
+          title: "Account Created Successfully!",
+          description: "Welcome to Charmntreats! You can now sign in.",
+        });
+        
+        // Clear form and hide OTP verification
         setSignupData({
           fullName: '',
           email: '',
           password: '',
           confirmPassword: ''
         });
+        setPendingSignupData(null);
+        setShowOTPVerification(false);
+        
+        // Auto-fill login form
+        setLoginData({
+          email: pendingSignupData.email,
+          password: ''
+        });
+      } else {
+        toast({
+          title: "Account Creation Failed",
+          description: "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error('Account creation error:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating your account.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOTPCancel = () => {
+    setShowOTPVerification(false);
+    setPendingSignupData(null);
+    setOtpEmail('');
   };
 
   return (
@@ -136,6 +257,8 @@ const Auth = () => {
             </CardHeader>
             
             <CardContent>
+
+
               <Tabs defaultValue="signin" className="space-y-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -297,6 +420,18 @@ const Auth = () => {
         isOpen={showForgotPassword} 
         onClose={() => setShowForgotPassword(false)} 
       />
+
+      {/* OTP Verification Modal */}
+      {showOTPVerification && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <OTPVerification
+            email={otpEmail}
+            type={otpType}
+            onVerificationSuccess={handleOTPVerificationSuccess}
+            onCancel={handleOTPCancel}
+          />
+        </div>
+      )}
       
       <Footer />
     </div>

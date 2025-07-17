@@ -1,142 +1,101 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Image as ImageIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface HomepageImageUploadProps {
-  currentImageUrl: string;
-  onImageChange: (imageUrl: string) => void;
+  imageUrl: string;
+  onImageChange: (url: string) => void;
+  label?: string;
 }
 
-const HomepageImageUpload = ({ currentImageUrl, onImageChange }: HomepageImageUploadProps) => {
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const HomepageImageUpload: React.FC<HomepageImageUploadProps> = ({ 
+  imageUrl, 
+  onImageChange, 
+  label = "Hero Image" 
+}) => {
+  const [newImageUrl, setNewImageUrl] = useState(imageUrl);
   const { toast } = useToast();
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+  const handleUpdateImage = () => {
+    if (!newImageUrl.trim()) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
+        title: "Invalid URL",
+        description: "Please enter a valid image URL.",
         variant: "destructive",
       });
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploading(true);
-
+    // Basic URL validation
     try {
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `hero-${Date.now()}.${fileExt}`;
-
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('homepage-images')
-        .upload(fileName, file);
-
-      if (error) {
-        console.error('Upload error:', error);
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('homepage-images')
-        .getPublicUrl(data.path);
-
-      onImageChange(publicUrl);
-      
+      new URL(newImageUrl);
+    } catch {
       toast({
-        title: "Success",
-        description: "Image uploaded successfully!",
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: "Invalid URL",
+        description: "Please enter a valid image URL.",
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      return;
     }
+
+    onImageChange(newImageUrl);
+    toast({
+      title: "Image Updated",
+      description: "Hero image has been updated successfully.",
+    });
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="hero-image-upload">Hero Image</Label>
-        <div className="mt-2 space-y-2">
-          <Input
-            ref={fileInputRef}
-            id="hero-image-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            disabled={uploading}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full"
-          >
-            {uploading ? (
-              <>
-                <Upload className="h-4 w-4 mr-2 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Upload New Image
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {currentImageUrl && (
-        <div>
-          <Label>Current Image Preview</Label>
+      <Label>{label}</Label>
+      
+      {/* Current image preview */}
+      {imageUrl && (
+        <div className="relative w-full h-48 overflow-hidden rounded-lg border">
           <img
-            src={currentImageUrl}
-            alt="Hero preview"
-            className="w-full max-w-sm h-48 object-cover rounded border mt-2"
+            src={imageUrl}
+            alt="Hero image preview"
+            className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
             }}
           />
         </div>
       )}
+
+      {/* Image URL input */}
+      <div className="flex gap-2">
+        <Input
+          value={newImageUrl}
+          onChange={(e) => setNewImageUrl(e.target.value)}
+          placeholder="Enter image URL (https://...)"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={handleUpdateImage}
+          className="bg-amber-600 hover:bg-amber-700"
+        >
+          <ImageIcon className="h-4 w-4 mr-2" />
+          Update
+        </Button>
+      </div>
+
+      {!imageUrl && (
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">No hero image set</p>
+          <p className="text-sm text-gray-400">Add an image URL using the input above</p>
+        </div>
+      )}
+
+      <p className="text-sm text-gray-500">
+        Recommended size: 1200x600px or larger for best quality
+      </p>
     </div>
   );
 };

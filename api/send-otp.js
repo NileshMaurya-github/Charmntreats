@@ -1,0 +1,132 @@
+// Vercel serverless function for sending OTP emails via Brevo SDK
+const SibApiV3Sdk = require('sib-api-v3-sdk');
+
+// Configure API key
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY || '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';
+
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { email, otp, type } = req.body;
+
+    if (!email || !otp || !type) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    console.log('📧 Sending OTP email via Brevo SDK:', { email, otp, type });
+
+    // Create transactional email API instance
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    
+    // Create email data
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    
+    // Set sender
+    sendSmtpEmail.sender = {
+      name: "Charmntreats",
+      email: "9258ee001@smtp-brevo.com"
+    };
+    
+    // Set recipient
+    sendSmtpEmail.to = [{
+      email: email,
+      name: "User"
+    }];
+    
+    // Set subject
+    const subject = type === 'signup' 
+      ? 'Verify Your Email - Charmntreats' 
+      : 'Password Reset Code - Charmntreats';
+    sendSmtpEmail.subject = subject;
+    
+    // Set HTML content
+    const title = type === 'signup' ? 'Verify Your Email' : 'Reset Your Password';
+    const message = type === 'signup' 
+      ? 'Thank you for signing up with Charmntreats! Please use the following code to verify your email address:'
+      : 'You requested to reset your password. Please use the following code to proceed:';
+
+    sendSmtpEmail.htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #f59e42 0%, #f97316 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Charmntreats</h1>
+          <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Handcrafted with Love</p>
+        </div>
+        
+        <div style="background: white; padding: 40px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+          <h2 style="color: #1f2937; margin-bottom: 20px;">${title}</h2>
+          <p style="margin-bottom: 30px;">${message}</p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;">Your verification code is:</p>
+            <div style="font-size: 32px; font-weight: bold; color: #f59e42; letter-spacing: 8px; font-family: monospace;">${otp}</div>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            This code will expire in 10 minutes. If you didn't request this, please ignore this email.
+          </p>
+          
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">
+              © 2024 Charmntreats. All rights reserved.<br>
+              Handcrafted treasures for your special moments.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Set text content
+    sendSmtpEmail.textContent = `
+      Charmntreats - ${title}
+      
+      ${message}
+      
+      Your verification code is: ${otp}
+      
+      This code will expire in 10 minutes.
+      
+      © 2024 Charmntreats. All rights reserved.
+    `;
+    
+    // Send email
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    
+    console.log('✅ OTP email sent successfully!', data.messageId);
+    
+    return res.status(200).json({ 
+      success: true, 
+      messageId: data.messageId,
+      message: 'OTP sent successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending OTP email:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send OTP email',
+      details: error.message 
+    });
+  }
+}

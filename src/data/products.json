@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Sample Product",
+    "description": "A beautiful resin art piece.",
+    "price": 100,
+    "category": "Resin Art Work",
+    "images": ["https://images.unsplash.com/photo-1582562124811-c09040d0a901?auto=format&fit=crop&w=400&q=80"],
+    "catalog_number": "CAT-001",
+    "in_stock": true,
+    "stock_quantity": 10,
+    "featured": false,
+    "rating": 4.5,
+    "reviews": 2
+  },
+  {
+    "name": "Scented Candle",
+    "description": "Handpoured soy wax candle with lavender scent.",
+    "price": 299,
+    "category": "Candles",
+    "images": ["https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"],
+    "catalog_number": "CAT-002",
+    "in_stock": true,
+    "stock_quantity": 5,
+    "featured": true,
+    "rating": 5,
+    "reviews": 10
+  },
+  {
+    "name": "Calligraphy Art",
+    "description": "Beautiful hand-lettered calligraphy piece.",
+    "price": 150,
+    "category": "Calligraphy",
+    "images": ["https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80"],
+    "catalog_number": "CAT-003",
+    "in_stock": true,
+    "stock_quantity": 8,
+    "featured": false,
+    "rating": 4.8,
+    "reviews": 5
+  },
+  {
+    "name": "Hair Accessory Set",
+    "description": "Set of 3 handcrafted hair clips.",
+    "price": 120,
+    "category": "Hair Accessories",
+    "images": ["https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80"],
+    "catalog_number": "CAT-004",
+    "in_stock": true,
+    "stock_quantity": 12,
+    "featured": false,
+    "rating": 4.2,
+    "reviews": 3
+  }
+]

@@ -24,10 +24,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Check for localStorage admin login on mount
     if (localStorage.getItem('isAdmin') === 'true') {
+      const adminUserData = localStorage.getItem('adminUser');
+      let adminUser;
+      
+      try {
+        adminUser = adminUserData ? JSON.parse(adminUserData) : null;
+      } catch (error) {
+        console.error('Error parsing admin user data:', error);
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('adminUser');
+        setLoading(false);
+        return;
+      }
+      
       setUser({
         id: 'admin-local',
         email: 'nileshmaurya2020@gmail.com',
-        user_metadata: { role: 'admin' },
+        user_metadata: { role: 'admin', full_name: 'Admin User' },
         app_metadata: { provider: 'local' },
         aud: 'authenticated',
         created_at: new Date().toISOString(),
@@ -136,19 +149,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Remove admin local login if present
       localStorage.removeItem('isAdmin');
+      localStorage.removeItem('adminUser');
       setUser(null);
       setIsAdmin(false);
       setSession(null);
+      
       // Also sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) {
         toast.error(error.message);
       } else {
         toast.success('Signed out successfully');
-        window.location.href = '/auth';
       }
+      
+      // Redirect to auth page
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Sign out error:', error);
+      toast.error('Error signing out');
     }
   };
 

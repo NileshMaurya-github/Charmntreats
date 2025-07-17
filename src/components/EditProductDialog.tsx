@@ -1,24 +1,55 @@
-
 import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ImageUpload from './ImageUpload';
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  catalog_number: string;
+  images: string[];
+  in_stock: boolean;
+  featured: boolean;
+  rating?: number;
+  reviews?: number;
+  stock_quantity?: number;
+}
+
 interface EditProductDialogProps {
-  product: any;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
   onProductUpdated: () => void;
 }
 
-const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditProductDialogProps) => {
+const categories = [
+  'Dream Catcher',
+  'Embroidery', 
+  'Lippan Arts',
+  'Resin Art Work',
+  'Illustration',
+  'Candles',
+  'Calligraphy',
+  'Hair Accessories',
+  'Others'
+];
+
+const EditProductDialog: React.FC<EditProductDialogProps> = ({
+  product,
+  isOpen,
+  onClose,
+  onProductUpdated
+}) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,7 +58,7 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
     price: '',
     category: '',
     catalog_number: '',
-    images: [],
+    images: [] as string[],
     in_stock: true,
     featured: false,
     rating: '',
@@ -35,38 +66,27 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
     stock_quantity: ''
   });
 
-  const categories = [
-    'Dream Catcher',
-    'Embroidery', 
-    'Lippan Arts',
-    'Resin Art Work',
-    'Illustration',
-    'Candles',
-    'Calligraphy',
-    'Hair Accessories',
-    'Others'
-  ];
-
   useEffect(() => {
-    if (product && isOpen) {
+    if (product) {
       setFormData({
-        name: product.name || '',
+        name: product.name,
         description: product.description || '',
-        price: product.price?.toString() || '',
-        category: product.category || '',
-        catalog_number: product.catalog_number || '',
+        price: product.price.toString(),
+        category: product.category,
+        catalog_number: product.catalog_number,
         images: product.images || [],
-        in_stock: product.in_stock ?? true,
-        featured: product.featured ?? false,
+        in_stock: product.in_stock,
+        featured: product.featured || false,
         rating: product.rating?.toString() || '',
         reviews: product.reviews?.toString() || '',
         stock_quantity: product.stock_quantity?.toString() || ''
       });
     }
-  }, [product, isOpen]);
+  }, [product]);
 
-  const handleUpdateProduct = async () => {
-    if (!product?.id) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
 
     setLoading(true);
     try {
@@ -80,8 +100,8 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
         in_stock: formData.in_stock,
         featured: formData.featured,
         rating: formData.rating ? parseFloat(formData.rating) : null,
-        reviews: formData.reviews ? parseInt(formData.reviews) : 0,
-        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
+        reviews: formData.reviews ? parseInt(formData.reviews) : null,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : null,
         updated_at: new Date().toISOString()
       };
 
@@ -124,56 +144,88 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
         </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-          <div>
-            <Label htmlFor="edit-name">Product Name</Label>
-            <Input
-              id="edit-name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter product name"
-            />
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="edit-name">Product Name</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter product name"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-price">Price (₹)</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                placeholder="Enter price"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-category">Category</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-catalog">Catalog Number</Label>
+              <Input
+                id="edit-catalog"
+                value={formData.catalog_number}
+                onChange={(e) => handleInputChange('catalog_number', e.target.value)}
+                placeholder="Enter catalog number"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-rating">Rating (1-5)</Label>
+              <Input
+                id="edit-rating"
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={formData.rating}
+                onChange={(e) => handleInputChange('rating', e.target.value)}
+                placeholder="Enter rating"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-stock">Stock Quantity</Label>
+              <Input
+                id="edit-stock"
+                type="number"
+                min="0"
+                value={formData.stock_quantity}
+                onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
+                placeholder="Enter stock quantity"
+              />
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="edit-price">Price (₹)</Label>
-            <Input
-              id="edit-price"
-              type="number"
-              value={formData.price}
-              onChange={(e) => handleInputChange('price', e.target.value)}
-              placeholder="Enter price"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="edit-category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="edit-catalog-number">Catalog Number</Label>
-            <Input
-              id="edit-catalog-number"
-              value={formData.catalog_number}
-              onChange={(e) => handleInputChange('catalog_number', e.target.value)}
-              placeholder="Enter catalog number"
-            />
-          </div>
-
-          <div className="md:col-span-2">
             <Label htmlFor="edit-description">Description</Label>
             <Textarea
               id="edit-description"
@@ -184,53 +236,13 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
             />
           </div>
 
-          <div className="md:col-span-2">
-            <ImageUpload
-              images={formData.images}
-              onImagesChange={(images) => handleInputChange('images', images)}
-              maxImages={5}
-            />
-          </div>
+          <ImageUpload
+            images={formData.images}
+            onImagesChange={(images) => handleInputChange('images', images)}
+            maxImages={5}
+          />
 
-          <div>
-            <Label htmlFor="edit-rating">Rating (1-5)</Label>
-            <Input
-              id="edit-rating"
-              type="number"
-              min="1"
-              max="5"
-              step="0.1"
-              value={formData.rating}
-              onChange={(e) => handleInputChange('rating', e.target.value)}
-              placeholder="Enter rating"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="edit-reviews">Number of Reviews</Label>
-            <Input
-              id="edit-reviews"
-              type="number"
-              min="0"
-              value={formData.reviews}
-              onChange={(e) => handleInputChange('reviews', e.target.value)}
-              placeholder="Enter number of reviews"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="edit-stock-quantity">Stock Quantity</Label>
-            <Input
-              id="edit-stock-quantity"
-              type="number"
-              min="0"
-              value={formData.stock_quantity}
-              onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
-              placeholder="Enter stock quantity"
-            />
-          </div>
-
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <Switch
                 id="edit-in-stock"
@@ -249,20 +261,25 @@ const EditProductDialog = ({ product, isOpen, onClose, onProductUpdated }: EditP
               <Label htmlFor="edit-featured">Featured</Label>
             </div>
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleUpdateProduct} 
-            className="bg-amber-600 hover:bg-amber-700"
-            disabled={loading || !formData.name || !formData.price || !formData.category}
-          >
-            {loading ? 'Updating...' : 'Update Product'}
-          </Button>
-        </DialogFooter>
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-amber-600 hover:bg-amber-700"
+              disabled={loading || !formData.name || !formData.price || !formData.category}
+            >
+              {loading ? 'Updating...' : 'Update Product'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

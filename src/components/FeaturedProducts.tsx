@@ -15,13 +15,27 @@ const FeaturedProducts = () => {
 
   const fetchFeaturedProducts = async () => {
     try {
-      const { data, error } = await supabase
+      // First try to get featured products
+      let { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('featured', true)
         .eq('in_stock', true)
         .limit(6)
         .order('created_at', { ascending: false });
+
+      // If no featured products found, get any in-stock products
+      if (!error && (!data || data.length === 0)) {
+        const { data: allData, error: allError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('in_stock', true)
+          .limit(6)
+          .order('created_at', { ascending: false });
+        
+        data = allData;
+        error = allError;
+      }
 
       if (error) throw error;
 
@@ -34,7 +48,6 @@ const FeaturedProducts = () => {
         category: product.category,
         images: product.images || ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
         catalogNumber: product.catalog_number,
-        inStock: product.in_stock,
         in_stock: product.in_stock,
         stock_quantity: product.stock_quantity,
         featured: product.featured || false,

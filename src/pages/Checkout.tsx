@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import brevoService from '@/services/brevoService';
 
 // Add Razorpay type to window for TypeScript
 declare global {
@@ -103,7 +104,7 @@ const Checkout = () => {
     if (!validateForm()) return;
     setIsProcessing(true);
     const orderId = 'CHT' + Date.now();
-    const totalAmount = getTotalPrice() + (getTotalPrice() >= 599 ? 0 : 50);
+    const totalAmount = getTotalPrice() + (getTotalPrice() >= 500 ? 0 : 50);
     const orderItems = cartItems.map(item => ({
       id: item.id,
       name: item.name,
@@ -134,6 +135,24 @@ const Checkout = () => {
           setIsProcessing(false);
           return;
         }
+
+        // Send order confirmation email
+        try {
+          await brevoService.sendOrderConfirmationEmail(
+            formData.email,
+            formData.name,
+            orderId,
+            {
+              totalAmount: totalAmount,
+              paymentMethod: 'Cash on Delivery',
+              items: orderItems
+            }
+          );
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+          // Don't fail the order if email fails
+        }
+
         clearCart();
         toast({ title: 'Order Placed Successfully!', description: `Your order ${orderId} has been placed. You'll receive a confirmation email shortly.` });
         navigate('/', { replace: true });
@@ -179,8 +198,26 @@ const Checkout = () => {
               setIsProcessing(false);
               return;
             }
+
+            // Send order confirmation email for online payment
+            try {
+              await brevoService.sendOrderConfirmationEmail(
+                formData.email,
+                formData.name,
+                orderId,
+                {
+                  totalAmount: totalAmount,
+                  paymentMethod: 'Online Payment (Razorpay)',
+                  items: orderItems
+                }
+              );
+            } catch (emailError) {
+              console.error('Failed to send confirmation email:', emailError);
+              // Don't fail the order if email fails
+            }
+
             clearCart();
-            toast({ title: 'Payment Successful!', description: `Your order ${orderId} has been placed.` });
+            toast({ title: 'Payment Successful!', description: `Your order ${orderId} has been placed. You'll receive a confirmation email shortly.` });
             navigate('/', { replace: true });
           } catch (error) {
             toast({ title: 'Order Failed', description: 'An unexpected error occurred after payment.', variant: 'destructive' });
@@ -234,7 +271,7 @@ const Checkout = () => {
     );
   }
 
-  const totalAmount = getTotalPrice() + (getTotalPrice() >= 599 ? 0 : 50);
+  const totalAmount = getTotalPrice() + (getTotalPrice() >= 500 ? 0 : 50);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -414,8 +451,8 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Shipping</span>
-                    <span className={getTotalPrice() >= 599 ? 'text-green-600' : ''}>
-                      {getTotalPrice() >= 599 ? 'Free' : '₹50'}
+                    <span className={getTotalPrice() >= 500 ? 'text-green-600' : ''}>
+                      {getTotalPrice() >= 500 ? 'Free' : '₹50'}
                     </span>
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">

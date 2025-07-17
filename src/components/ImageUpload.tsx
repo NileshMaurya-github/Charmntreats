@@ -1,171 +1,139 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { X, Upload, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
-  bucket?: string; // NEW: allow custom bucket
 }
 
-const ImageUpload = ({ images, onImagesChange, maxImages = 5, bucket = 'product-images' }: ImageUploadProps) => {
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const ImageUpload: React.FC<ImageUploadProps> = ({ 
+  images, 
+  onImagesChange, 
+  maxImages = 5 
+}) => {
+  const [newImageUrl, setNewImageUrl] = useState('');
   const { toast } = useToast();
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    if (images.length + files.length > maxImages) {
+  const addImageUrl = () => {
+    if (!newImageUrl.trim()) {
       toast({
-        title: "Too many images",
-        description: `You can only upload up to ${maxImages} images.`,
+        title: "Invalid URL",
+        description: "Please enter a valid image URL.",
         variant: "destructive",
       });
       return;
     }
 
-    setUploading(true);
-    const newImageUrls: string[] = [];
-
-    try {
-      for (const file of Array.from(files)) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not an image file.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          toast({
-            title: "File too large",
-            description: `${file.name} is larger than 5MB.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-
-        // Upload to Supabase storage (use custom bucket)
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, file);
-
-        if (error) {
-          console.error('Upload error:', error);
-          toast({
-            title: "Upload failed",
-            description: `Failed to upload ${file.name}.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(data.path);
-
-        newImageUrls.push(publicUrl);
-      }
-
-      if (newImageUrls.length > 0) {
-        onImagesChange([...images, ...newImageUrls]);
-        toast({
-          title: "Success",
-          description: `${newImageUrls.length} image(s) uploaded successfully!`,
-        });
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
+    if (images.length >= maxImages) {
       toast({
-        title: "Upload failed",
-        description: "Failed to upload images. Please try again.",
+        title: "Maximum Images Reached",
+        description: `You can only add up to ${maxImages} images.`,
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      return;
     }
+
+    // Basic URL validation
+    try {
+      new URL(newImageUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid image URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onImagesChange([...images, newImageUrl]);
+    setNewImageUrl('');
+    toast({
+      title: "Image Added",
+      description: "Image URL has been added successfully.",
+    });
   };
 
-  const removeImage = (indexToRemove: number) => {
-    const newImages = images.filter((_, index) => index !== indexToRemove);
-    onImagesChange(newImages);
+  const removeImage = (index: number) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    onImagesChange(updatedImages);
+    toast({
+      title: "Image Removed",
+      description: "Image has been removed successfully.",
+    });
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="image-upload">Product Images ({images.length}/{maxImages})</Label>
-        <div className="mt-2 space-y-2">
-          <Input
-            ref={fileInputRef}
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileSelect}
-            disabled={uploading || images.length >= maxImages}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading || images.length >= maxImages}
-            className="w-full"
-          >
-            {uploading ? (
-              <>
-                <Upload className="h-4 w-4 mr-2 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Select Images
-              </>
-            )}
-          </Button>
-        </div>
+      <Label>Product Images (Max {maxImages})</Label>
+      
+      {/* Add new image URL */}
+      <div className="flex gap-2">
+        <Input
+          value={newImageUrl}
+          onChange={(e) => setNewImageUrl(e.target.value)}
+          placeholder="Enter image URL (https://...)"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={addImageUrl}
+          disabled={images.length >= maxImages}
+          className="bg-amber-600 hover:bg-amber-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add
+        </Button>
       </div>
 
+      {/* Display current images */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {images.map((imageUrl, index) => (
             <div key={index} className="relative group">
-              <img
-                src={imageUrl}
-                alt={`Product image ${index + 1}`}
-                className="w-full h-24 object-cover rounded border"
-              />
-              <button
+              <div className="aspect-square overflow-hidden rounded-lg border">
+                <img
+                  src={imageUrl}
+                  alt={`Product image ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80';
+                  }}
+                />
+              </div>
+              <Button
                 type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
+              <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                {index + 1}
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      {images.length === 0 && (
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">No images added yet</p>
+          <p className="text-sm text-gray-400">Add image URLs using the input above</p>
+        </div>
+      )}
+
+      <p className="text-sm text-gray-500">
+        {images.length}/{maxImages} images added
+      </p>
     </div>
   );
 };

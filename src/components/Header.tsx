@@ -10,7 +10,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCart();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const categories = [
@@ -89,12 +89,12 @@ const Header = () => {
             {user ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-slate-600 hidden sm:block">
-                  Welcome, {user.email}
+                  Welcome, {isAdmin ? 'Admin' : user.email}
                 </span>
-                {user.user_metadata?.role === 'admin' && (
+                {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" size="sm">
-                      Admin
+                    <Button variant="outline" size="sm" className="bg-amber-100 text-amber-700 border-amber-300">
+                      Admin Panel
                     </Button>
                   </Link>
                 )}

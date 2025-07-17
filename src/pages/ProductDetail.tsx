@@ -10,7 +10,6 @@ import Footer from '@/components/Footer';
 import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { CartProvider } from '@/contexts/CartContext';
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -321,13 +320,4 @@ const ProductDetailPage = () => {
   );
 };
 
-// Wrap with CartProvider
-const ProductDetail = () => {
-  return (
-    <CartProvider>
-      <ProductDetailPage />
-    </CartProvider>
-  );
-};
-
-export default ProductDetail;
+export default ProductDetailPage;
