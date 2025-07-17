@@ -11,6 +11,9 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderHistory from "./pages/OrderHistory";
+import TestEmails from "./pages/TestEmails";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Vlog from "./pages/Vlog";
@@ -43,6 +46,9 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/order-history" element={<OrderHistory />} />
+              <Route path="/test-emails" element={<TestEmails />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/vlog" element={<Vlog />} />
               <Route path="/about" element={<AboutUs />} />

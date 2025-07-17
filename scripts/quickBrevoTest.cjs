@@ -1,39 +1,69 @@
-// Quick test to verify Brevo integration after IDE autofix
-const SibApiV3Sdk = require('sib-api-v3-sdk');
+// Quick test to verify Brevo API is working
+const https = require('https');
 
-const API_KEY = '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';
+function testBrevoAPI() {
+  const BREVO_API_KEY = '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';
+  
+  const emailData = JSON.stringify({
+    sender: { 
+      name: "Charmntreats Test", 
+      email: "charmntreats@gmail.com" 
+    },
+    to: [{ 
+      email: "charmntreats@gmail.com",
+      name: "Test Recipient"
+    }],
+    subject: "🧪 Quick Brevo Test - " + new Date().toLocaleString(),
+    htmlContent: `
+      <h2 style="color: #f59e42;">🧪 Brevo API Test</h2>
+      <p>This is a quick test to verify Brevo API is working.</p>
+      <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+      <p><strong>Status:</strong> ✅ API Working</p>
+    `
+  });
 
-async function quickTest() {
-  try {
-    console.log('🧪 Quick test after IDE autofix...');
+  const options = {
+    hostname: 'api.brevo.com',
+    port: 443,
+    path: '/v3/smtp/email',
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'api-key': BREVO_API_KEY,
+      'Content-Length': Buffer.byteLength(emailData)
+    }
+  };
 
-    // Configure the API client
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = API_KEY;
+  console.log('🧪 Testing Brevo API...');
 
-    // Test account access
-    const accountApi = new SibApiV3Sdk.AccountApi();
-    const accountInfo = await accountApi.getAccount();
+  const req = https.request(options, (res) => {
+    console.log('📊 Response Status:', res.statusCode);
     
-    console.log('✅ API Key is still valid!');
-    console.log('📧 Account:', accountInfo.email);
-    console.log('📊 Email Credits:', accountInfo.plan[0].credits);
+    let data = '';
+    res.on('data', (chunk) => {
+      data += chunk;
+    });
     
-    return true;
+    res.on('end', () => {
+      if (res.statusCode === 201) {
+        const result = JSON.parse(data);
+        console.log('✅ Email sent successfully!');
+        console.log('📧 Message ID:', result.messageId);
+        console.log('🎉 Brevo API is working correctly!');
+      } else {
+        console.log('❌ Email failed:', res.statusCode);
+        console.log('Error:', data);
+      }
+    });
+  });
 
-  } catch (error) {
-    console.error('❌ Test failed:', error.message);
-    return false;
-  }
+  req.on('error', (error) => {
+    console.error('❌ Request failed:', error.message);
+  });
+
+  req.write(emailData);
+  req.end();
 }
 
-quickTest()
-  .then(success => {
-    if (success) {
-      console.log('🎉 Brevo integration is still working after IDE autofix!');
-    } else {
-      console.log('💥 Integration may have issues after autofix.');
-    }
-    process.exit(success ? 0 : 1);
-  });
+testBrevoAPI();

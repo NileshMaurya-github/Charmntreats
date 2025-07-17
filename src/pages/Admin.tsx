@@ -18,6 +18,7 @@ import ImageUpload from '@/components/ImageUpload';
 import HomepageImageUpload from '@/components/HomepageImageUpload';
 import EditProductDialog from '@/components/EditProductDialog';
 import CustomerDataSection from '@/components/CustomerDataSection';
+import OrderManagement from '@/components/OrderManagement';
 import customerDataService from '@/services/customerDataService';
 
 const Admin = () => {
@@ -678,49 +679,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders ({orders.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-semibold">Order #{order.order_number}</h3>
-                          <p className="text-sm text-gray-600">
-                            Customer: {order.customer_details?.name || 'N/A'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Total: ₹{order.total_amount}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Select
-                            value={order.order_status}
-                            onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="confirmed">Confirmed</SelectItem>
-                              <SelectItem value="shipped">Shipped</SelectItem>
-                              <SelectItem value="delivered">Delivered</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Created: {new Date(order.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <OrderManagement />
           </TabsContent>
 
           <TabsContent value="customers" className="space-y-6">

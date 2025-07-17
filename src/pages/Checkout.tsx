@@ -4,95 +4,96 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, MapPin, Phone, Mail, User } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import brevoService from '@/services/brevoService';
+import { sendOrderEmails } from '@/services/simpleEmailService';
+import { orderStorageService } from '@/services/orderStorageService';
 
-// Add Razorpay type to window for TypeScript
-declare global {
-  interface Window {
-    Razorpay?: any;
-  }
+interface OrderData {
+  customerInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  items: any[];
+  totalAmount: number;
+  paymentMethod: 'cod' | 'online';
+  orderDate: string;
+  orderId: string;
 }
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('cod');
   
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+  const [customerInfo, setCustomerInfo] = useState({
+    fullName: '',
+    email: user?.email || '',
     phone: '',
     address: '',
     city: '',
     state: '',
-    pincode: '',
-    paymentMethod: 'COD'
+    pincode: ''
   });
-  
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Razorpay script loader
-  function loadRazorpayScript(src: string) {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined') return resolve(false);
-      if (document.getElementById('razorpay-script')) return resolve(true);
-      const script = document.createElement('script');
-      script.id = 'razorpay-script';
-      script.src = src;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  }
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      navigate('/cart');
+    }
+  }, [cartItems, navigate]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handlePaymentMethodChange = (value: string) => {
-    setFormData({
-      ...formData,
-      paymentMethod: value
-    });
+  const handleInputChange = (field: string, value: string) => {
+    setCustomerInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const validateForm = () => {
-    const required = ['name', 'email', 'phone', 'address', 'city', 'state', 'pincode'];
+    const required = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'pincode'];
     for (const field of required) {
-      if (!formData[field as keyof typeof formData]) {
+      if (!customerInfo[field as keyof typeof customerInfo]) {
         toast({
           title: "Missing Information",
-          description: `Please fill in your ${field}.`,
-          variant: "destructive"
+          description: `Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
+          variant: "destructive",
         });
         return false;
       }
     }
     
-    if (!/^\d{10}$/.test(formData.phone)) {
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerInfo.email)) {
       toast({
-        title: "Invalid Phone Number",
-        description: "Please enter a valid 10-digit phone number.",
-        variant: "destructive"
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
       });
       return false;
     }
     
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    // Validate phone
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(customerInfo.phone)) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
-        variant: "destructive"
+        title: "Invalid Phone Number",
+        description: "Please enter a valid 10-digit phone number",
+        variant: "destructive",
       });
       return false;
     }
@@ -100,178 +101,110 @@ const Checkout = () => {
     return true;
   };
 
+  const generateOrderId = () => {
+    const timestamp = Date.now().toString();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `CT${timestamp.slice(-6)}${random}`;
+  };
+
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
-    setIsProcessing(true);
-    const orderId = 'CHT' + Date.now();
-    const totalAmount = getTotalPrice() + (getTotalPrice() >= 500 ? 0 : 50);
-    const orderItems = cartItems.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.images ? item.images[0] : '',
-      category: item.category,
-      catalogNumber: item.catalogNumber
-    }));
-    // COD logic (as before)
-    if (formData.paymentMethod === 'COD') {
-      try {
-        const { error: orderError } = await supabase
-          .from('orders')
-          .insert([
-            {
-              order_number: orderId,
-              customer_details: formData,
-              items: orderItems,
-              total_amount: totalAmount,
-              payment_method: formData.paymentMethod,
-              order_status: 'pending',
-              payment_status: 'pending'
-            }
-          ]);
-        if (orderError) {
-          toast({ title: 'Order Failed', description: 'Failed to place order. Please try again.', variant: 'destructive' });
-          setIsProcessing(false);
-          return;
-        }
-
-        // Send order confirmation email
-        try {
-          await brevoService.sendOrderConfirmationEmail(
-            formData.email,
-            formData.name,
-            orderId,
-            {
-              totalAmount: totalAmount,
-              paymentMethod: 'Cash on Delivery',
-              items: orderItems
-            }
-          );
-        } catch (emailError) {
-          console.error('Failed to send confirmation email:', emailError);
-          // Don't fail the order if email fails
-        }
-
-        clearCart();
-        toast({ title: 'Order Placed Successfully!', description: `Your order ${orderId} has been placed. You'll receive a confirmation email shortly.` });
-        navigate('/', { replace: true });
-      } catch (error) {
-        toast({ title: 'Order Failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
-      } finally {
-        setIsProcessing(false);
-      }
-      return;
-    }
-    // Razorpay logic
-    if (formData.paymentMethod === 'RAZORPAY') {
-      const res = await loadRazorpayScript('https://checkout.razorpay.com/v1/checkout.js');
-      if (!res) {
-        toast({ title: 'Payment Error', description: 'Failed to load Razorpay. Please try again.', variant: 'destructive' });
-        setIsProcessing(false);
-        return;
-      }
-      const options = {
-        key: 'rzp_test_1DP5mmOlF5G5ag', // Replace with your Razorpay key
-        amount: totalAmount * 100,
-        currency: 'INR',
-        name: 'Charmntreats',
-        description: 'Order Payment',
-        handler: async function (response: any) {
-          try {
-            const { error: orderError } = await supabase
-              .from('orders')
-              .insert([
-                {
-                  order_number: orderId,
-                  customer_details: formData,
-                  items: orderItems,
-                  total_amount: totalAmount,
-                  payment_method: 'RAZORPAY',
-                  order_status: 'pending',
-                  payment_status: 'paid',
-                  razorpay_payment_id: response.razorpay_payment_id
-                }
-              ]);
-            if (orderError) {
-              toast({ title: 'Order Failed', description: 'Failed to save order after payment.', variant: 'destructive' });
-              setIsProcessing(false);
-              return;
-            }
-
-            // Send order confirmation email for online payment
-            try {
-              await brevoService.sendOrderConfirmationEmail(
-                formData.email,
-                formData.name,
-                orderId,
-                {
-                  totalAmount: totalAmount,
-                  paymentMethod: 'Online Payment (Razorpay)',
-                  items: orderItems
-                }
-              );
-            } catch (emailError) {
-              console.error('Failed to send confirmation email:', emailError);
-              // Don't fail the order if email fails
-            }
-
-            clearCart();
-            toast({ title: 'Payment Successful!', description: `Your order ${orderId} has been placed. You'll receive a confirmation email shortly.` });
-            navigate('/', { replace: true });
-          } catch (error) {
-            toast({ title: 'Order Failed', description: 'An unexpected error occurred after payment.', variant: 'destructive' });
-            setIsProcessing(false);
-          }
-        },
-        prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone
-        },
-        theme: { color: '#f59e42' }
+    
+    setLoading(true);
+    
+    try {
+      const orderId = generateOrderId();
+      const shippingCost = getTotalPrice() >= 500 ? 0 : 50;
+      const totalAmount = getTotalPrice() + shippingCost;
+      
+      const orderData: OrderData = {
+        customerInfo,
+        items: cartItems,
+        totalAmount,
+        paymentMethod,
+        orderDate: new Date().toISOString(),
+        orderId
       };
-      // @ts-ignore
-      if (typeof window !== 'undefined' && window.Razorpay) {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      } else {
-        toast({ title: 'Payment Error', description: 'Razorpay is not available.', variant: 'destructive' });
+
+      // Send order confirmation emails using the email service
+      console.log('📧 Sending order confirmation emails...');
+      try {
+        const emailsSent = await sendOrderEmails(orderData);
+        
+        if (emailsSent) {
+          console.log('✅ Order confirmation emails sent successfully!');
+          toast({
+            title: "Emails Sent!",
+            description: "Order confirmation emails have been sent to you and our store.",
+          });
+        } else {
+          console.error('❌ Failed to send some confirmation emails');
+          toast({
+            title: "Email Warning",
+            description: "Order placed but some confirmation emails may not have been sent.",
+            variant: "destructive",
+          });
+        }
+      } catch (emailError) {
+        console.error('❌ Email service error:', emailError);
+        toast({
+          title: "Email Warning", 
+          description: "Order placed but confirmation emails may not have been sent.",
+          variant: "destructive",
+        });
       }
-      setIsProcessing(false);
-      return;
+
+      // Store order using the order storage service
+      console.log('💾 Storing order...');
+      try {
+        const orderStored = await orderStorageService.storeOrder(orderData);
+        
+        if (orderStored) {
+          console.log('✅ Order stored successfully!');
+        } else {
+          console.error('❌ Failed to store order');
+          toast({
+            title: "Storage Warning",
+            description: "Order placed but may not be saved. Please contact support if needed.",
+            variant: "destructive",
+          });
+        }
+      } catch (storeError) {
+        console.error('❌ Storage service error:', storeError);
+        toast({
+          title: "Storage Warning",
+          description: "Order placed but may not be saved. Please contact support if needed.",
+          variant: "destructive",
+        });
+      }
+
+      // Clear cart
+      clearCart();
+      
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Your order #${orderId} has been confirmed. Check your email for details.`,
+      });
+
+      // Navigate to order confirmation page
+      navigate(`/order-confirmation/${orderId}`, { 
+        state: { orderData } 
+      });
+
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        title: "Order Failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadRazorpayScript('https://checkout.razorpay.com/v1/checkout.js');
-  }, []);
-
-  // Debug panel for cart troubleshooting
-  const debugCart = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem('cart') ?? '' : '';
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center">
-        <Header />
-        <div className="flex-1 flex flex-col justify-center items-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Your cart is empty</h1>
-          <p className="text-gray-600 mb-8">Add some products to your cart before proceeding to checkout.</p>
-          <Button onClick={() => navigate('/products')} className="bg-amber-600 hover:bg-amber-700">
-            Go to Products
-          </Button>
-          <div className="mt-8 p-4 bg-gray-100 rounded text-xs text-left max-w-xl w-full">
-            <div className="mb-2 font-bold">Debug Info:</div>
-            <div><b>cartItems:</b> {JSON.stringify(cartItems)}</div>
-            <div><b>localStorage["cart"]:</b> {debugCart}</div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  const totalAmount = getTotalPrice() + (getTotalPrice() >= 500 ? 0 : 50);
+  const shippingCost = getTotalPrice() >= 500 ? 0 : 50;
+  const totalAmount = getTotalPrice() + shippingCost;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -293,68 +226,65 @@ const Checkout = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
+          {/* Customer Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Customer Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Customer Information
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Full Name *</Label>
+                    <Label htmlFor="fullName">Full Name *</Label>
                     <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
+                      id="fullName"
+                      value={customerInfo.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
                       placeholder="Enter your full name"
-                      required
                     />
                   </div>
                   <div>
                     <Label htmlFor="email">Email Address *</Label>
                     <Input
                       id="email"
-                      name="email"
                       type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
+                      value={customerInfo.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
                       placeholder="Enter your email"
-                      required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="10-digit phone number"
-                      required
-                    />
-                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    value={customerInfo.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="Enter your 10-digit phone number"
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Shipping Address */}
             <Card>
               <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Delivery Address
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="address">Street Address *</Label>
-                  <Input
+                  <Textarea
                     id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
+                    value={customerInfo.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
                     placeholder="Enter your complete address"
-                    required
+                    rows={3}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -362,64 +292,54 @@ const Checkout = () => {
                     <Label htmlFor="city">City *</Label>
                     <Input
                       id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
+                      value={customerInfo.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
                       placeholder="City"
-                      required
                     />
                   </div>
                   <div>
                     <Label htmlFor="state">State *</Label>
                     <Input
                       id="state"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
+                      value={customerInfo.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
                       placeholder="State"
-                      required
                     />
                   </div>
                   <div>
                     <Label htmlFor="pincode">Pincode *</Label>
                     <Input
                       id="pincode"
-                      name="pincode"
-                      value={formData.pincode}
-                      onChange={handleInputChange}
+                      value={customerInfo.pincode}
+                      onChange={(e) => handleInputChange('pincode', e.target.value)}
                       placeholder="Pincode"
-                      required
                     />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Payment Method */}
             <Card>
               <CardHeader>
                 <CardTitle>Payment Method</CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={formData.paymentMethod} onValueChange={handlePaymentMethodChange}>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                    <RadioGroupItem value="COD" id="cod" />
+                <RadioGroup value={paymentMethod} onValueChange={(value: 'cod' | 'online') => setPaymentMethod(value)}>
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                    <RadioGroupItem value="cod" id="cod" />
                     <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
-                      <Banknote className="h-4 w-4" />
+                      <Truck className="h-5 w-5 text-amber-600" />
                       Cash on Delivery (COD)
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                    <RadioGroupItem value="RAZORPAY" id="razorpay" />
-                    <Label htmlFor="razorpay" className="flex items-center gap-2 cursor-pointer">
-                      <CreditCard className="h-4 w-4" />
-                      Pay Online (Razorpay)
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                    <RadioGroupItem value="online" id="online" />
+                    <Label htmlFor="online" className="flex items-center gap-2 cursor-pointer">
+                      <CreditCard className="h-5 w-5 text-amber-600" />
+                      Online Payment
                     </Label>
                   </div>
                 </RadioGroup>
-                <p className="text-sm text-slate-500 mt-3">
-                  Choose Cash on Delivery or pay securely online with Razorpay.
-                </p>
               </CardContent>
             </Card>
           </div>
@@ -433,26 +353,27 @@ const Checkout = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-slate-600">
-                        {item.name} × {item.quantity}
-                      </span>
-                      <span className="font-medium">
+                    <div key={item.id} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{item.name}</div>
+                        <div className="text-xs text-slate-600">Qty: {item.quantity}</div>
+                      </div>
+                      <div className="font-medium">
                         ₹{(item.price * item.quantity).toLocaleString()}
-                      </span>
+                      </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="border-t pt-3 space-y-2">
+                <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Subtotal</span>
+                    <span>Subtotal</span>
                     <span>₹{getTotalPrice().toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Shipping</span>
-                    <span className={getTotalPrice() >= 500 ? 'text-green-600' : ''}>
-                      {getTotalPrice() >= 500 ? 'Free' : '₹50'}
+                    <span>Shipping</span>
+                    <span className={shippingCost === 0 ? 'text-green-600' : ''}>
+                      {shippingCost === 0 ? 'Free' : `₹${shippingCost}`}
                     </span>
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">
@@ -463,14 +384,14 @@ const Checkout = () => {
 
                 <Button 
                   onClick={handlePlaceOrder}
-                  disabled={isProcessing}
+                  disabled={loading}
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12"
                 >
-                  {isProcessing ? 'Processing...' : `Place Order - ₹${totalAmount.toLocaleString()}`}
+                  {loading ? 'Placing Order...' : `Place Order - ₹${totalAmount.toLocaleString()}`}
                 </Button>
 
                 <div className="text-xs text-slate-500 text-center">
-                  By placing this order, you agree to our Terms & Conditions
+                  By placing this order, you agree to our terms and conditions
                 </div>
               </CardContent>
             </Card>

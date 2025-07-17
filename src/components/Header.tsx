@@ -98,6 +98,11 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
+                <Link to="/order-history">
+                  <Button variant="outline" size="sm" className="bg-blue-100 text-blue-700 border-blue-300">
+                    My Orders
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
