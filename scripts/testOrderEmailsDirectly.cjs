@@ -1,59 +1,51 @@
-// Enhanced Email Service - Complete invoice emails with Brevo API
-interface OrderData {
+// Test order emails directly without TypeScript imports
+const BREVO_API_KEY = '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';
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+
+// Test order data
+const testOrderData = {
   customerInfo: {
-    fullName: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    pincode: string;
-  };
-  items: any[];
-  totalAmount: number;
-  paymentMethod: 'cod' | 'online';
-  orderDate: string;
-  orderId: string;
-}
+    fullName: 'John Doe',
+    email: 'nilesh.maurya.developer@gmail.com',
+    phone: '9876543210',
+    address: '123 Main Street, Apartment 4B, Near Central Mall',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    pincode: '400001'
+  },
+  items: [
+    {
+      id: 'handcrafted-dreamcatcher-001',
+      name: 'Handcrafted Dream Catcher - Large',
+      category: 'Home Decor',
+      catalogNumber: 'DC001',
+      price: 799,
+      quantity: 1,
+      images: ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9']
+    },
+    {
+      id: 'macrame-wall-hanging-002', 
+      name: 'Macrame Wall Hanging - Boho Style',
+      category: 'Wall Art',
+      catalogNumber: 'MWH002',
+      price: 700,
+      quantity: 2,
+      images: ['https://images.unsplash.com/photo-1586023492125-27b2c045efd7']
+    }
+  ],
+  totalAmount: 2199,
+  paymentMethod: 'cod',
+  orderDate: new Date().toISOString(),
+  orderId: 'CT' + Date.now().toString().slice(-6) + 'LIVE'
+};
 
-export async function sendOrderEmails(orderData: OrderData): Promise<boolean> {
-  const BREVO_API_KEY = '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';
-  const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
-
-  console.log('🚀 Sending detailed order emails for order:', orderData.orderId);
-
-  try {
-    // Send detailed customer invoice email
-    const customerEmailSent = await sendDetailedCustomerEmail(orderData, BREVO_API_KEY, BREVO_API_URL);
-    
-    // Wait 2 seconds between emails to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Send detailed store notification email
-    const storeEmailSent = await sendDetailedStoreEmail(orderData, BREVO_API_KEY, BREVO_API_URL);
-
-    console.log('📊 Enhanced Email Results:', {
-      customerInvoice: customerEmailSent ? '✅ SENT' : '❌ FAILED',
-      storeNotification: storeEmailSent ? '✅ SENT' : '❌ FAILED'
-    });
-
-    // Return true if at least customer email is sent (store email is less critical)
-    return customerEmailSent;
-
-  } catch (error) {
-    console.error('❌ Email sending failed:', error);
-    return false;
-  }
-}
-
-async function sendDetailedCustomerEmail(orderData: OrderData, apiKey: string, apiUrl: string): Promise<boolean> {
+async function sendDetailedCustomerEmail(orderData) {
   try {
     const { customerInfo, items, totalAmount, paymentMethod, orderId } = orderData;
     
     // Calculate subtotal and shipping
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shipping = subtotal >= 500 ? 0 : 50;
-    const finalTotal = subtotal + shipping;
 
     // Enhanced customer email with complete invoice
     const htmlContent = `
@@ -218,12 +210,12 @@ async function sendDetailedCustomerEmail(orderData: OrderData, apiKey: string, a
       </html>
     `;
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(BREVO_API_URL, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'api-key': apiKey
+        'api-key': BREVO_API_KEY
       },
       body: JSON.stringify({
         sender: { 
@@ -241,18 +233,11 @@ async function sendDetailedCustomerEmail(orderData: OrderData, apiKey: string, a
 
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Detailed customer email sent! Message ID:', result.messageId);
+      console.log('✅ Customer invoice email sent! Message ID:', result.messageId);
       return true;
     } else {
       const errorText = await response.text();
       console.error('❌ Customer email failed:', response.status, errorText);
-      
-      // If IP authorization error, provide helpful message
-      if (errorText.includes('unrecognised IP address')) {
-        console.log('💡 IP Authorization needed: Go to https://app.brevo.com/security/authorised_ips');
-        console.log('💡 Add your current IP address to continue sending emails');
-      }
-      
       return false;
     }
 
@@ -262,7 +247,7 @@ async function sendDetailedCustomerEmail(orderData: OrderData, apiKey: string, a
   }
 }
 
-async function sendDetailedStoreEmail(orderData: OrderData, apiKey: string, apiUrl: string): Promise<boolean> {
+async function sendDetailedStoreEmail(orderData) {
   try {
     const { customerInfo, items, totalAmount, paymentMethod, orderId } = orderData;
     
@@ -389,12 +374,12 @@ async function sendDetailedStoreEmail(orderData: OrderData, apiKey: string, apiU
       </html>
     `;
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(BREVO_API_URL, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'api-key': apiKey
+        'api-key': BREVO_API_KEY
       },
       body: JSON.stringify({
         sender: { 
@@ -412,7 +397,7 @@ async function sendDetailedStoreEmail(orderData: OrderData, apiKey: string, apiU
 
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Detailed store email sent! Message ID:', result.messageId);
+      console.log('✅ Store notification email sent! Message ID:', result.messageId);
       return true;
     } else {
       const errorText = await response.text();
@@ -426,211 +411,64 @@ async function sendDetailedStoreEmail(orderData: OrderData, apiKey: string, apiU
   }
 }
 
-async function sendCustomerEmail(orderData: OrderData, apiKey: string, apiUrl: string): Promise<boolean> {
+async function testCompleteOrderEmails() {
+  console.log('🧪 Testing Complete Order Email System with Invoice Details...\n');
+  
+  console.log('📧 Test Order Details:');
+  console.log('- Order ID:', testOrderData.orderId);
+  console.log('- Customer:', testOrderData.customerInfo.fullName);
+  console.log('- Email:', testOrderData.customerInfo.email);
+  console.log('- Total Amount:', '₹' + testOrderData.totalAmount.toLocaleString());
+  console.log('- Items:', testOrderData.items.length);
+  console.log('- Payment:', testOrderData.paymentMethod.toUpperCase());
+
   try {
-    const { customerInfo, items, totalAmount, paymentMethod, orderId } = orderData;
+    console.log('\n1️⃣ Sending detailed customer invoice email...');
+    const customerEmailSent = await sendDetailedCustomerEmail(testOrderData);
+    
+    console.log('\n⏳ Waiting 3 seconds before sending store email...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    console.log('\n2️⃣ Sending detailed store notification email...');
+    const storeEmailSent = await sendDetailedStoreEmail(testOrderData);
 
-    // Simple customer email template
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: #f59e42; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="margin: 0;">Order Confirmed! 🎉</h1>
-          <p style="margin: 10px 0 0 0;">Thank you for shopping with Charmntreats</p>
-        </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-top: none; padding: 30px; border-radius: 0 0 8px 8px;">
-          <h2 style="color: #333;">Order Details</h2>
-          <p><strong>Order ID:</strong> #${orderId}</p>
-          <p><strong>Customer:</strong> ${customerInfo.fullName}</p>
-          <p><strong>Email:</strong> ${customerInfo.email}</p>
-          <p><strong>Phone:</strong> ${customerInfo.phone}</p>
-          <p><strong>Payment Method:</strong> ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
-          <p><strong>Total Amount:</strong> ₹${totalAmount.toLocaleString()}</p>
-          
-          <h3 style="color: #333;">Delivery Address</h3>
-          <p>
-            ${customerInfo.fullName}<br>
-            ${customerInfo.address}<br>
-            ${customerInfo.city}, ${customerInfo.state} - ${customerInfo.pincode}
-          </p>
-          
-          <h3 style="color: #333;">Order Items</h3>
-          ${items.map(item => `
-            <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-              <strong>${item.name}</strong><br>
-              Category: ${item.category} | Qty: ${item.quantity} | Price: ₹${(item.price * item.quantity).toLocaleString()}
-            </div>
-          `).join('')}
-          
-          <div style="background: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px;">
-            <h4 style="margin: 0 0 10px 0; color: #333;">What's Next?</h4>
-            <ul style="margin: 0; padding-left: 20px;">
-              <li>We'll process your order within 24 hours</li>
-              <li>You'll receive tracking details via email</li>
-              <li>Estimated delivery: 5-7 business days</li>
-              ${paymentMethod === 'cod' ? '<li>Pay cash when your order arrives</li>' : '<li>Payment processed successfully</li>'}
-            </ul>
-          </div>
-          
-          <p style="text-align: center; margin-top: 30px;">
-            <a href="https://charmntreats.com" style="background: #f59e42; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Continue Shopping</a>
-          </p>
-          
-          <hr style="margin: 30px 0;">
-          <p style="text-align: center; color: #666; font-size: 12px;">
-            Need help? Contact us at charmntreats@gmail.com<br>
-            © 2024 Charmntreats. All rights reserved.
-          </p>
-        </div>
-      </div>
-    `;
+    console.log('\n📊 Complete Email Test Results:');
+    console.log('✅ Customer Invoice Email:', customerEmailSent ? '✅ SENT' : '❌ FAILED');
+    console.log('✅ Store Notification Email:', storeEmailSent ? '✅ SENT' : '❌ FAILED');
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      },
-      body: JSON.stringify({
-        sender: { 
-          name: "Charmntreats", 
-          email: "charmntreats@gmail.com" 
-        },
-        to: [{ 
-          email: customerInfo.email,
-          name: customerInfo.fullName
-        }],
-        subject: `Order Confirmation #${orderId} - Charmntreats`,
-        htmlContent
-      })
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('✅ Customer email sent! ID:', result.messageId);
+    if (customerEmailSent && storeEmailSent) {
+      console.log('\n🎉 SUCCESS! Both detailed emails sent successfully!');
+      console.log('\n📧 Check your email inbox for:');
+      console.log('✅ Professional order confirmation with complete invoice');
+      console.log('✅ Itemized breakdown with prices and totals');
+      console.log('✅ Payment method and delivery information');
+      console.log('✅ Customer support and next steps');
+      
+      console.log('\n📧 Check charmntreats@gmail.com for:');
+      console.log('✅ New order notification with customer details');
+      console.log('✅ Complete order summary for processing');
+      console.log('✅ Action items and delivery timeline');
+      
+      console.log('\n🎯 Your Enhanced Email System Features:');
+      console.log('• Complete order invoice with professional design');
+      console.log('• Detailed customer and delivery information');
+      console.log('• Payment method clearly displayed');
+      console.log('• Next steps and customer support links');
+      console.log('• Store notifications with processing instructions');
+      console.log('• COD vs Online payment handling');
+      console.log('• Mobile-responsive HTML email templates');
+      
       return true;
     } else {
-      const errorText = await response.text();
-      console.error('❌ Customer email failed:', response.status, errorText);
+      console.log('\n⚠️ Some emails failed - check logs above for details');
       return false;
     }
 
   } catch (error) {
-    console.error('❌ Customer email error:', error);
+    console.error('❌ Complete email test failed:', error);
     return false;
   }
 }
 
-async function sendStoreEmail(orderData: OrderData, apiKey: string, apiUrl: string): Promise<boolean> {
-  try {
-    const { customerInfo, items, totalAmount, paymentMethod, orderId } = orderData;
-
-    // Simple store notification template
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="margin: 0;">🎉 New Order Received!</h1>
-          <p style="margin: 10px 0 0 0;">Congratulations on your new order</p>
-        </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-top: none; padding: 30px; border-radius: 0 0 8px 8px;">
-          <h2 style="color: #333;">Order Summary</h2>
-          <p><strong>Order ID:</strong> #${orderId}</p>
-          <p><strong>Order Date:</strong> ${new Date(orderData.orderDate).toLocaleDateString('en-IN')}</p>
-          <p><strong>Payment Method:</strong> ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
-          <p><strong>Total Amount:</strong> <span style="color: #10b981; font-size: 18px; font-weight: bold;">₹${totalAmount.toLocaleString()}</span></p>
-          
-          <h3 style="color: #333;">Customer Details</h3>
-          <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
-            <p><strong>Name:</strong> ${customerInfo.fullName}</p>
-            <p><strong>Email:</strong> ${customerInfo.email}</p>
-            <p><strong>Phone:</strong> ${customerInfo.phone}</p>
-            <p><strong>Address:</strong><br>
-              ${customerInfo.address}<br>
-              ${customerInfo.city}, ${customerInfo.state} - ${customerInfo.pincode}
-            </p>
-          </div>
-          
-          <h3 style="color: #333;">Order Items</h3>
-          <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <thead>
-              <tr style="background: #f3f4f6;">
-                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Product</th>
-                <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Qty</th>
-                <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Price</th>
-                <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map(item => `
-                <tr>
-                  <td style="padding: 10px; border: 1px solid #ddd;">
-                    <strong>${item.name}</strong><br>
-                    <small>${item.category} • #${item.catalogNumber}</small>
-                  </td>
-                  <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
-                  <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${item.price.toLocaleString()}</td>
-                  <td style="padding: 10px; text-align: right; border: 1px solid #ddd; font-weight: bold;">₹${(item.price * item.quantity).toLocaleString()}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div style="background: #fef3c7; padding: 15px; margin: 20px 0; border-radius: 5px;">
-            <h4 style="margin: 0 0 10px 0; color: #92400e;">Action Required</h4>
-            <ul style="margin: 0; padding-left: 20px; color: #92400e;">
-              <li>Process this order within 24 hours</li>
-              <li>Prepare items for packaging and shipping</li>
-              <li>Update customer with tracking information</li>
-              ${paymentMethod === 'cod' ? `<li><strong>COD Order:</strong> Collect ₹${totalAmount.toLocaleString()} on delivery</li>` : '<li><strong>Payment:</strong> Already processed online</li>'}
-            </ul>
-          </div>
-          
-          <hr style="margin: 30px 0;">
-          <p style="text-align: center; color: #666; font-size: 12px;">
-            This is an automated notification from your Charmntreats store system.<br>
-            Order received on ${new Date(orderData.orderDate).toLocaleString('en-IN')}
-          </p>
-        </div>
-      </div>
-    `;
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      },
-      body: JSON.stringify({
-        sender: { 
-          name: "Charmntreats Store System", 
-          email: "charmntreats@gmail.com" 
-        },
-        to: [{ 
-          email: "charmntreats@gmail.com",
-          name: "Charmntreats Store"
-        }],
-        subject: `🎉 New Order Received #${orderId} - ₹${totalAmount.toLocaleString()}`,
-        htmlContent
-      })
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('✅ Store email sent! ID:', result.messageId);
-      return true;
-    } else {
-      const errorText = await response.text();
-      console.error('❌ Store email failed:', response.status, errorText);
-      return false;
-    }
-
-  } catch (error) {
-    console.error('❌ Store email error:', error);
-    return false;
-  }
-}
-
-export default { sendOrderEmails };
+// Run the complete test
+testCompleteOrderEmails();

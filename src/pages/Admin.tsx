@@ -19,6 +19,8 @@ import HomepageImageUpload from '@/components/HomepageImageUpload';
 import EditProductDialog from '@/components/EditProductDialog';
 import CustomerDataSection from '@/components/CustomerDataSection';
 import OrderManagement from '@/components/OrderManagement';
+import CustomerManagement from '@/components/CustomerManagement';
+import BlogManagement from '@/components/BlogManagement';
 import customerDataService from '@/services/customerDataService';
 
 const Admin = () => {
@@ -28,6 +30,7 @@ const Admin = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [testimonialsCount, setTestimonialsCount] = useState(0);
   const [homepageContent, setHomepageContent] = useState(null);
   const [customerData, setCustomerData] = useState([]);
   const [loginHistory, setLoginHistory] = useState([]);
@@ -95,32 +98,69 @@ const Admin = () => {
       if (productsError) throw productsError;
       setProducts(productsData || []);
 
-      // Fetch orders
+      // Fetch orders (last 3 months)
+      console.log('🔍 Fetching orders...');
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          order_items (*)
+        `)
+        .gte('created_at', threeMonthsAgo.toISOString())
         .order('created_at', { ascending: false });
 
-      if (ordersError) throw ordersError;
+      console.log('📊 Orders result:', { data: ordersData, error: ordersError });
+      
+      if (ordersError) {
+        console.error('❌ Orders error:', ordersError);
+        throw ordersError;
+      }
+      
+      console.log('✅ Setting orders:', ordersData?.length || 0);
       setOrders(ordersData || []);
 
-      // Fetch users from profiles
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch customer profiles (all logged-in users)
+      console.log('🔍 Fetching customer profiles...');
+      try {
+        const { data: customersData, error: customersError } = await supabase
+          .from('customer_profiles')
+          .select('*')
+          .order('last_login_at', { ascending: false });
 
-      if (usersError) throw usersError;
-      setUsers(usersData || []);
+        console.log('📊 Customers result:', { data: customersData, error: customersError });
+        
+        if (customersError && !customersError.message.includes('does not exist')) {
+          console.error('❌ Customers error:', customersError);
+          throw customersError;
+        }
+        
+        console.log('✅ Setting customers:', customersData?.length || 0);
+        setUsers(customersData || []);
+      } catch (customerError) {
+        console.log('⚠️ Customer profiles table not found, using empty array');
+        setUsers([]);
+      }
 
       // Fetch testimonials
+      console.log('🔍 Fetching testimonials...');
       const { data: testimonialsData, error: testimonialsError } = await supabase
         .from('testimonials')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (testimonialsError) throw testimonialsError;
+      console.log('📊 Testimonials result:', { data: testimonialsData, error: testimonialsError });
+      
+      if (testimonialsError) {
+        console.error('❌ Testimonials error:', testimonialsError);
+        throw testimonialsError;
+      }
+      
+      console.log('✅ Setting testimonials:', testimonialsData?.length || 0);
       setTestimonials(testimonialsData || []);
+      setTestimonialsCount(testimonialsData?.length || 0);
 
       // Fetch homepage content
       const { data: homepageData, error: homepageError } = await supabase
@@ -455,7 +495,7 @@ const Admin = () => {
                 <ShoppingCart className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{orders.length || 'Loading...'}</p>
                 </div>
               </div>
             </CardContent>
@@ -479,7 +519,9 @@ const Admin = () => {
                 <MessageSquare className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Testimonials</p>
-                  <p className="text-2xl font-bold text-gray-900">{testimonials.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {testimonialsCount || testimonials.length || 0}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -487,10 +529,11 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="homepage">Homepage</TabsTrigger>
           </TabsList>
@@ -686,6 +729,10 @@ const Admin = () => {
             <CustomerDataSection />
           </TabsContent>
 
+          <TabsContent value="blog" className="space-y-6">
+            <BlogManagement />
+          </TabsContent>
+
           <TabsContent value="testimonials" className="space-y-6">
             {/* Add Testimonial Form */}
             <Card>
@@ -768,7 +815,17 @@ const Admin = () => {
             {/* Testimonials List */}
             <Card>
               <CardHeader>
-                <CardTitle>Testimonials ({testimonials.length})</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Testimonials ({testimonials.length})</span>
+                  <Button 
+                    onClick={fetchData} 
+                    variant="outline" 
+                    size="sm"
+                    className="ml-2"
+                  >
+                    🔄 Refresh Data
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">

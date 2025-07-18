@@ -21,6 +21,7 @@ import AboutUs from "./pages/AboutUs";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import DreamCatcher from "./pages/blogDetails/DreamCatcher";
 import Embroidery from "./pages/blogDetails/Embroidery";
 import LippanArt from "./pages/blogDetails/LippanArt";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/vlog" element={<Vlog />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route
                 path="/admin"
                 element={

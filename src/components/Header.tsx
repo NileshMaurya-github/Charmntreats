@@ -82,6 +82,9 @@ const Header = () => {
             <Link to="/about" className="text-slate-700 hover:text-amber-600 transition-colors">
               About Us
             </Link>
+            <Link to="/blog" className="text-slate-700 hover:text-amber-600 transition-colors">
+              Blog
+            </Link>
           </nav>
 
           {/* Right side buttons */}
@@ -195,6 +198,13 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 About Us
+              </Link>
+              <Link
+                to="/blog"
+                className="text-slate-700 hover:text-amber-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
               </Link>
               <Link to="/auth?admin=1">
                 <Button variant="default" size="sm" className="ml-2 bg-amber-700 text-white">
