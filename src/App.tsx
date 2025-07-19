@@ -14,6 +14,7 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderHistory from "./pages/OrderHistory";
 import TestEmails from "./pages/TestEmails";
+import EmailTest from "./pages/EmailTest";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Vlog from "./pages/Vlog";
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/order-history" element={<OrderHistory />} />
               <Route path="/test-emails" element={<TestEmails />} />
+              <Route path="/email-test" element={<EmailTest />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/vlog" element={<Vlog />} />
               <Route path="/about" element={<AboutUs />} />

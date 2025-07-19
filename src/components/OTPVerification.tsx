@@ -102,9 +102,10 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
         });
       }
     } catch (error) {
+      console.error('❌ Error resending OTP:', error);
       toast({
-        title: "Error",
-        description: "Failed to resend OTP.",
+        title: "Email Issue",
+        description: "Failed to resend OTP. Please check your email or contact support at charmntreats@gmail.com if the problem persists.",
         variant: "destructive",
       });
     } finally {

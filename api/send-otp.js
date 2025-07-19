@@ -1,10 +1,7 @@
-// Vercel serverless function for sending OTP emails via Brevo SDK
-const SibApiV3Sdk = require('sib-api-v3-sdk');
+// Vercel serverless function for sending OTP emails via Brevo API
+// Using direct fetch instead of SDK for better compatibility
 
-// Configure API key
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY || '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';
+const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.VITE_BREVO_API_KEY || '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';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -27,39 +24,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    console.log('📧 Sending OTP email via Brevo SDK:', { email, otp, type });
+    console.log('📧 Sending OTP email via Brevo API:', { email, otp, type });
 
-    // Create transactional email API instance
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    
-    // Create email data
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    
-    // Set sender
-    sendSmtpEmail.sender = {
-      name: "Charmntreats",
-      email: "charmntreats@gmail.com"
-    };
-    
-    // Set recipient
-    sendSmtpEmail.to = [{
-      email: email,
-      name: "User"
-    }];
-    
-    // Set subject
+    // Set subject and content
     const subject = type === 'signup' 
       ? 'Verify Your Email - Charmntreats' 
       : 'Password Reset Code - Charmntreats';
-    sendSmtpEmail.subject = subject;
     
-    // Set HTML content
     const title = type === 'signup' ? 'Verify Your Email' : 'Reset Your Password';
     const message = type === 'signup' 
       ? 'Thank you for signing up with Charmntreats! Please use the following code to verify your email address:'
       : 'You requested to reset your password. Please use the following code to proceed:';
 
-    sendSmtpEmail.htmlContent = `
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -97,8 +74,7 @@ export default async function handler(req, res) {
       </html>
     `;
     
-    // Set text content
-    sendSmtpEmail.textContent = `
+    const textContent = `
       Charmntreats - ${title}
       
       ${message}
@@ -109,15 +85,39 @@ export default async function handler(req, res) {
       
       © 2024 Charmntreats. All rights reserved.
     `;
-    
-    // Send email
-    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    
-    console.log('✅ OTP email sent successfully!', data.messageId);
+
+    // Send email using direct Brevo API call
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': BREVO_API_KEY
+      },
+      body: JSON.stringify({
+        sender: { 
+          name: "Charmntreats", 
+          email: "charmntreats@gmail.com" 
+        },
+        to: [{ email, name: "User" }],
+        subject,
+        htmlContent,
+        textContent
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Brevo API error:', errorText);
+      throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ OTP email sent successfully!', result.messageId);
     
     return res.status(200).json({ 
       success: true, 
-      messageId: data.messageId,
+      messageId: result.messageId,
       message: 'OTP sent successfully'
     });
 

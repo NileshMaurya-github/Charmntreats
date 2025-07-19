@@ -1,5 +1,5 @@
-// Fixed Brevo Email Service - Using server-side API endpoint
-// This follows the official Brevo Node.js SDK implementation
+// Enhanced Brevo Email Service with Fallback Support
+import fallbackEmailService from './fallbackEmailService';
 
 interface OTPEmailRequest {
   email: string;
@@ -21,11 +21,25 @@ class BrevoService {
     this.serverEndpoint = '/api/send-otp';
   }
 
-  // Send OTP via server-side endpoint (recommended approach)
+  // Send OTP with enhanced fallback support
   async sendOTPEmail(email: string, otp: string, type: 'signup' | 'reset'): Promise<boolean> {
-    try {
-      console.log('🔐 Sending OTP email via server endpoint:', { email, otp, type });
+    console.log('🔐 Starting OTP email send process:', { email, otp: otp.substring(0, 2) + '****', type });
 
+    // Try the fallback email service first (it has multiple methods)
+    try {
+      console.log('🔄 Using enhanced fallback email service...');
+      const fallbackResult = await fallbackEmailService.sendOTPEmail(email, otp, type);
+      if (fallbackResult) {
+        console.log('✅ OTP email sent successfully via fallback service!');
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Fallback service error:', error);
+    }
+
+    // If fallback fails, try the original server endpoint
+    try {
+      console.log('🔄 Trying original server endpoint...');
       const response = await fetch(this.serverEndpoint, {
         method: 'POST',
         headers: {
@@ -38,30 +52,21 @@ class BrevoService {
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Server endpoint error:', errorData);
-        console.log('🔄 Falling back to direct API call...');
-        return await this.sendOTPEmailDirect(email, otp, type);
+      if (response.ok) {
+        const result: EmailResponse = await response.json();
+        if (result.success) {
+          console.log('✅ OTP email sent successfully via server endpoint!');
+          console.log('📧 Message ID:', result.messageId);
+          return true;
+        }
       }
-
-      const result: EmailResponse = await response.json();
-      
-      if (result.success) {
-        console.log('✅ OTP email sent successfully via server!');
-        console.log('📧 Message ID:', result.messageId);
-        return true;
-      } else {
-        console.error('❌ Server reported failure:', result.error);
-        console.log('🔄 Falling back to direct API call...');
-        return await this.sendOTPEmailDirect(email, otp, type);
-      }
-
     } catch (error) {
-      console.error('❌ Network error sending OTP email:', error);
-      console.log('🔄 Falling back to direct API call...');
-      return await this.sendOTPEmailDirect(email, otp, type);
+      console.error('❌ Server endpoint error:', error);
     }
+
+    // Final fallback to direct API
+    console.log('🔄 Final fallback to direct API...');
+    return await this.sendOTPEmailDirect(email, otp, type);
   }
 
   // Send welcome email

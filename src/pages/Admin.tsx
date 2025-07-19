@@ -88,103 +88,121 @@ const Admin = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    console.log('🚀 Starting admin data fetch...');
+    
     try {
-      // Fetch products
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (productsError) throw productsError;
-      setProducts(productsData || []);
-
-      // Fetch orders (last 3 months)
-      console.log('🔍 Fetching orders...');
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
-        .gte('created_at', threeMonthsAgo.toISOString())
-        .order('created_at', { ascending: false });
-
-      console.log('📊 Orders result:', { data: ordersData, error: ordersError });
-      
-      if (ordersError) {
-        console.error('❌ Orders error:', ordersError);
-        throw ordersError;
-      }
-      
-      console.log('✅ Setting orders:', ordersData?.length || 0);
-      setOrders(ordersData || []);
-
-      // Fetch customer profiles (all logged-in users)
-      console.log('🔍 Fetching customer profiles...');
-      try {
-        const { data: customersData, error: customersError } = await supabase
+      // Fetch all data in parallel for better performance
+      const [
+        productsResult,
+        ordersResult,
+        customersResult,
+        testimonialsResult,
+        homepageResult
+      ] = await Promise.allSettled([
+        // Fetch products
+        supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        
+        // Fetch orders (last 3 months)
+        (() => {
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+          return supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items (*)
+            `)
+            .gte('created_at', threeMonthsAgo.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(50); // Limit to improve performance
+        })(),
+        
+        // Fetch customer profiles
+        supabase
           .from('customer_profiles')
           .select('*')
-          .order('last_login_at', { ascending: false });
+          .order('last_login_at', { ascending: false })
+          .limit(100), // Limit to improve performance
+        
+        // Fetch testimonials
+        supabase
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        
+        // Fetch homepage content
+        supabase
+          .from('homepage_content')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ]);
 
-        console.log('📊 Customers result:', { data: customersData, error: customersError });
-        
-        if (customersError && !customersError.message.includes('does not exist')) {
-          console.error('❌ Customers error:', customersError);
-          throw customersError;
-        }
-        
-        console.log('✅ Setting customers:', customersData?.length || 0);
-        setUsers(customersData || []);
-      } catch (customerError) {
-        console.log('⚠️ Customer profiles table not found, using empty array');
+      // Handle products
+      if (productsResult.status === 'fulfilled' && !productsResult.value.error) {
+        setProducts(productsResult.value.data || []);
+        console.log('✅ Products loaded:', productsResult.value.data?.length || 0);
+      } else {
+        console.error('❌ Products error:', productsResult.status === 'fulfilled' ? productsResult.value.error : productsResult.reason);
+        setProducts([]);
+      }
+
+      // Handle orders
+      if (ordersResult.status === 'fulfilled' && !ordersResult.value.error) {
+        setOrders(ordersResult.value.data || []);
+        console.log('✅ Orders loaded:', ordersResult.value.data?.length || 0);
+      } else {
+        console.error('❌ Orders error:', ordersResult.status === 'fulfilled' ? ordersResult.value.error : ordersResult.reason);
+        setOrders([]);
+      }
+
+      // Handle customers
+      if (customersResult.status === 'fulfilled' && !customersResult.value.error) {
+        setUsers(customersResult.value.data || []);
+        console.log('✅ Customers loaded:', customersResult.value.data?.length || 0);
+      } else {
+        console.log('⚠️ Customer profiles not available, using empty array');
         setUsers([]);
       }
 
-      // Fetch testimonials
-      console.log('🔍 Fetching testimonials...');
-      const { data: testimonialsData, error: testimonialsError } = await supabase
-        .from('testimonials')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      console.log('📊 Testimonials result:', { data: testimonialsData, error: testimonialsError });
-      
-      if (testimonialsError) {
-        console.error('❌ Testimonials error:', testimonialsError);
-        throw testimonialsError;
+      // Handle testimonials
+      if (testimonialsResult.status === 'fulfilled' && !testimonialsResult.value.error) {
+        const testimonialsData = testimonialsResult.value.data || [];
+        setTestimonials(testimonialsData);
+        setTestimonialsCount(testimonialsData.length);
+        console.log('✅ Testimonials loaded:', testimonialsData.length);
+      } else {
+        console.error('❌ Testimonials error:', testimonialsResult.status === 'fulfilled' ? testimonialsResult.value.error : testimonialsResult.reason);
+        setTestimonials([]);
+        setTestimonialsCount(0);
       }
-      
-      console.log('✅ Setting testimonials:', testimonialsData?.length || 0);
-      setTestimonials(testimonialsData || []);
-      setTestimonialsCount(testimonialsData?.length || 0);
 
-      // Fetch homepage content
-      const { data: homepageData, error: homepageError } = await supabase
-        .from('homepage_content')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (homepageError && homepageError.code !== 'PGRST116') {
-        console.error('Error fetching homepage content:', homepageError);
-      } else if (homepageData) {
-        setHomepageContent(homepageData);
-        setNewHomepageContent({
-          hero_title: homepageData.hero_title,
-          hero_subtitle: homepageData.hero_subtitle,
-          hero_description: homepageData.hero_description,
-          hero_image_url: homepageData.hero_image_url
-        });
+      // Handle homepage content
+      if (homepageResult.status === 'fulfilled' && !homepageResult.value.error) {
+        const homepageData = homepageResult.value.data;
+        if (homepageData) {
+          setHomepageContent(homepageData);
+          setNewHomepageContent({
+            hero_title: homepageData.hero_title,
+            hero_subtitle: homepageData.hero_subtitle,
+            hero_description: homepageData.hero_description,
+            hero_image_url: homepageData.hero_image_url
+          });
+          console.log('✅ Homepage content loaded');
+        }
+      } else {
+        console.log('⚠️ Homepage content not available');
       }
+
+      console.log('🎉 Admin data fetch completed successfully!');
 
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('❌ Critical error in fetchData:', error);
       toast({
         title: "Error",
         description: "Failed to fetch data. Please try again.",
