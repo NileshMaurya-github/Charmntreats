@@ -207,7 +207,7 @@ const Checkout = () => {
   const totalAmount = getTotalPrice() + shippingCost;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-floral-gradient page-transition">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -216,13 +216,13 @@ const Checkout = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/cart')}
-            className="flex items-center gap-2 text-slate-600 hover:text-amber-600"
+            className="flex items-center gap-2 text-slate-600 hover:text-black"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Cart
           </Button>
           <span className="text-slate-400">•</span>
-          <span className="text-amber-600 font-medium">Checkout</span>
+          <span className="text-black font-medium">Checkout</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -328,14 +328,14 @@ const Checkout = () => {
                   <div className="flex items-center space-x-2 p-4 border rounded-lg">
                     <RadioGroupItem value="cod" id="cod" />
                     <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
-                      <Truck className="h-5 w-5 text-amber-600" />
+                      <Truck className="h-5 w-5 text-black" />
                       Cash on Delivery (COD)
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-4 border rounded-lg">
                     <RadioGroupItem value="online" id="online" />
                     <Label htmlFor="online" className="flex items-center gap-2 cursor-pointer">
-                      <CreditCard className="h-5 w-5 text-amber-600" />
+                      <CreditCard className="h-5 w-5 text-black" />
                       Online Payment
                     </Label>
                   </div>
@@ -385,7 +385,7 @@ const Checkout = () => {
                 <Button 
                   onClick={handlePlaceOrder}
                   disabled={loading}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12"
+                  className="w-full btn-dark-pink h-12"
                 >
                   {loading ? 'Placing Order...' : `Place Order - ₹${totalAmount.toLocaleString()}`}
                 </Button>

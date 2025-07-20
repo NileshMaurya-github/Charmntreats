@@ -41,7 +41,7 @@ serve(async (req) => {
     // - Amazon SES
     // - Postmark
     
-    const adminEmail = 'Charmntreats@gmail.com';
+    const adminEmail = 'charmntreats@gmail.com';
     console.log('Admin notification email would be sent to:', adminEmail);
     console.log('Admin notification generated for order:', orderData.order_number);
 

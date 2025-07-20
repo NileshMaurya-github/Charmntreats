@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import permanentCustomerService from '@/services/permanentCustomerService';
 
 interface AuthContextType {
   user: User | null;
@@ -128,11 +129,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        // Track failed login attempt
+        await permanentCustomerService.trackLoginActivity({
+          email,
+          login_method: 'password',
+          success: false,
+          failure_reason: error.message
+        });
+        
         toast.error(error.message);
         return { error };
       }
 
       if (data.user) {
+        // Track successful login
+        await permanentCustomerService.trackLoginActivity({
+          email,
+          login_method: 'password',
+          success: true
+        });
+
+        // Update customer profile with login info
+        await permanentCustomerService.updateCustomerProfile(email, {
+          last_login_at: new Date().toISOString(),
+          email_verified: data.user.email_confirmed_at ? true : false
+        });
+
         toast.success('Welcome back!');
         window.location.href = '/';
       }
@@ -140,6 +162,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: null };
     } catch (error) {
       console.error('Sign in error:', error);
+      
+      // Track system error
+      await permanentCustomerService.trackLoginActivity({
+        email,
+        login_method: 'password',
+        success: false,
+        failure_reason: 'System error'
+      });
+      
       return { error };
     }
   };
@@ -165,6 +196,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
+        // Store new customer profile permanently
+        await permanentCustomerService.storeCustomerProfile({
+          user_id: data.user.id,
+          email: data.user.email!,
+          full_name: fullName,
+          signup_date: new Date().toISOString(),
+          email_verified: false,
+          signup_method: 'email',
+          marketing_consent: true,
+          status: 'active',
+          source: 'website'
+        });
+
+        // Track signup as first login activity
+        await permanentCustomerService.trackLoginActivity({
+          email: data.user.email!,
+          login_method: 'password',
+          success: true
+        });
+
         toast.success('Account created successfully! Please check your email to verify your account.');
       }
 

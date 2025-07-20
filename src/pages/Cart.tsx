@@ -195,7 +195,7 @@ const Cart = () => {
 
                 <Button 
                   onClick={handleCheckout}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12"
+                  className="w-full btn-dark-pink h-12"
                 >
                   Proceed to Checkout
                 </Button>

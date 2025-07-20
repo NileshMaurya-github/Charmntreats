@@ -36,30 +36,30 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+    <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-pink-200/50 sticky top-0 z-50 transition-all duration-300">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-amber-600">Charmntreats</div>
+            <div className="text-2xl font-bold text-pink-600 hover:text-pink-700 transition-colors">Charmntreats</div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-slate-700 hover:text-amber-600 transition-colors">
+            <Link to="/" className="text-slate-700 hover:text-pink-600 transition-colors">
               Home
             </Link>
             <div className="relative group">
-              <button className="text-slate-700 hover:text-amber-600 transition-colors">
+              <button className="text-slate-700 hover:text-pink-600 transition-colors">
                 Shop Categories
               </button>
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-md border border-pink-200/50 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                 <div className="p-2">
                   {categories.map((category) => (
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className="block w-full text-left px-3 py-2 text-slate-700 hover:bg-amber-50 hover:text-amber-600 rounded-md transition-colors"
+                      className="block w-full text-left px-3 py-2 text-slate-700 hover:bg-pink-50 hover:text-pink-600 rounded-md transition-colors"
                     >
                       {category}
                     </button>
@@ -68,7 +68,7 @@ const Header = () => {
               </div>
             </div>
             <button
-              className="text-slate-700 hover:text-amber-600 transition-colors"
+              className="text-slate-700 hover:text-pink-600 transition-colors"
               onClick={() => {
                 navigate('/products');
                 setIsMenuOpen(false);
@@ -79,10 +79,10 @@ const Header = () => {
             {/* <Link to="/vlog" className="text-slate-700 hover:text-amber-600 transition-colors">
               Gallery
             </Link> */}
-            <Link to="/about" className="text-slate-700 hover:text-amber-600 transition-colors">
+            <Link to="/about" className="text-slate-700 hover:text-pink-600 transition-colors">
               About Us
             </Link>
-            <Link to="/blog" className="text-slate-700 hover:text-amber-600 transition-colors">
+            <Link to="/blog" className="text-slate-700 hover:text-pink-600 transition-colors">
               Blog
             </Link>
           </nav>
@@ -96,13 +96,13 @@ const Header = () => {
                 </span>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" size="sm" className="bg-amber-100 text-amber-700 border-amber-300">
+                    <Button variant="outline" size="sm" className="bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200 transition-colors">
                       Admin Panel
                     </Button>
                   </Link>
                 )}
                 <Link to="/order-history">
-                  <Button variant="outline" size="sm" className="bg-blue-100 text-blue-700 border-blue-300">
+                  <Button variant="outline" size="sm" className="bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200 transition-colors">
                     My Orders
                   </Button>
                 </Link>
@@ -110,7 +110,7 @@ const Header = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="text-slate-600 hover:text-amber-600"
+                  className="text-slate-600 hover:text-pink-600 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -129,11 +129,11 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={() => setIsCartOpen(true)}
-              className="relative text-slate-700 hover:text-amber-600"
+              className="relative text-slate-700 hover:text-pink-600 transition-colors"
             >
               <ShoppingCart className="h-5 w-5" />
               {getTotalItems() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-amber-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-pink-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-pulse">
                   {getTotalItems()}
                 </span>
               )}

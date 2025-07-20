@@ -593,7 +593,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-floral-gradient page-transition">
       <Header />
       
       <div className="container mx-auto px-4 py-16">
@@ -669,7 +669,7 @@ const Auth = () => {
                     
                     <Button
                       type="submit"
-                      className="w-full bg-amber-600 hover:bg-amber-700"
+                      className="w-full btn-dark-pink"
                       disabled={loading}
                     >
                       {loading ? 'Signing In...' : 'Sign In'}
@@ -776,7 +776,7 @@ const Auth = () => {
                     
                     <Button
                       type="submit"
-                      className="w-full bg-amber-600 hover:bg-amber-700"
+                      className="w-full btn-dark-pink"
                       disabled={loading}
                     >
                       {loading ? 'Creating Account...' : 'Create Account'}

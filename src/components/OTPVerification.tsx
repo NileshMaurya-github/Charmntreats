@@ -167,7 +167,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
 
           <Button
             type="submit"
-            className="w-full bg-amber-600 hover:bg-amber-700"
+            className="w-full btn-dark-pink"
             disabled={loading || otp.length !== 6}
           >
             {loading ? 'Verifying...' : 'Verify Code'}

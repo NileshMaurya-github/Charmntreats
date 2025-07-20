@@ -197,7 +197,7 @@ const ForgotPasswordDialog = ({ isOpen, onClose }: ForgotPasswordDialogProps) =>
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                className="flex-1 btn-dark-pink"
               >
                 {loading ? 'Sending...' : 'Send Reset Code'}
               </Button>
@@ -257,7 +257,7 @@ const ForgotPasswordDialog = ({ isOpen, onClose }: ForgotPasswordDialogProps) =>
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                className="flex-1 btn-dark-pink"
               >
                 {loading ? 'Updating...' : 'Update Password'}
               </Button>

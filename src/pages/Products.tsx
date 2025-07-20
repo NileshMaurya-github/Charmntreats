@@ -110,12 +110,12 @@ const ProductsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-floral-gradient page-transition">
         <Header />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading products...</p>
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-600 mx-auto"></div>
+            <p className="mt-4 text-slate-700">Loading products...</p>
           </div>
         </div>
         <Footer />
@@ -124,7 +124,7 @@ const ProductsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-floral-gradient page-transition">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -133,13 +133,13 @@ const ProductsPage = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-slate-600 hover:text-amber-600"
+            className="flex items-center gap-2 text-slate-600 hover:text-pink-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Button>
           <span className="text-slate-400">•</span>
-          <span className="text-amber-600 font-medium">
+          <span className="text-pink-600 font-medium">
             {filterCategory === 'all' ? 'All Products' : filterCategory}
           </span>
         </div>
@@ -205,7 +205,7 @@ const ProductsPage = () => {
               </p>
               <Button 
                 onClick={() => navigate('/')}
-                className="bg-amber-600 hover:bg-amber-700"
+                className="btn-dark-pink"
               >
                 Back to Home
               </Button>

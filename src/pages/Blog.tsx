@@ -175,11 +175,11 @@ const Blog = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+      <div className="min-h-screen bg-floral-gradient page-transition">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-20">
-            <BookOpen className="h-8 w-8 animate-pulse text-amber-600 mr-3" />
-            <span className="text-lg text-slate-600">Loading blog posts...</span>
+            <BookOpen className="h-8 w-8 animate-pulse text-pink-600 mr-3" />
+            <span className="text-lg text-slate-700">Loading blog posts...</span>
           </div>
         </div>
       </div>
@@ -187,7 +187,7 @@ const Blog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+    <div className="min-h-screen bg-floral-gradient page-transition">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -203,7 +203,7 @@ const Blog = () => {
             rel="noopener noreferrer"
             className="inline-block"
           >
-            <Button className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2">
+            <Button className="btn-dark-pink px-6 py-2">
               Visit Our Main Website →
             </Button>
           </a>
@@ -222,7 +222,7 @@ const Blog = () => {
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch} className="bg-amber-600 hover:bg-amber-700">
+            <Button onClick={handleSearch} className="btn-dark-pink">
               Search
             </Button>
           </div>

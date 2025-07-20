@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Truck, RotateCcw, Heart } from 'lucide-react';
+import { Shield, Truck, Heart } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const AboutUs = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-floral-gradient page-transition">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -22,7 +22,7 @@ const AboutUs = () => {
         </div>
 
         {/* Our Story */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-12">
+        <div className="card-pink p-8 mb-12 hover-lift">
           <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center">
             Our <span className="text-amber-600">Story</span>
           </h2>
@@ -76,46 +76,36 @@ const AboutUs = () => {
           
           <Card className="text-center">
             <CardContent className="p-6">
-              <RotateCcw className="h-12 w-12 text-amber-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">Easy Returns</h3>
-              <p className="text-slate-600">Hassle-free returns and exchanges</p>
+              <Shield className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">100% Authentic</h3>
+              <p className="text-slate-600">Genuine handcrafted products guaranteed</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Policies Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Return Policy */}
+        {/* Product Policy Section */}
+        <div className="max-w-4xl mx-auto">
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-2xl font-bold text-slate-800 mb-4">Return Policy</h3>
-              <div className="space-y-3 text-slate-600">
-                <p><strong>30-Day Return Window:</strong> You can return items within 30 days of delivery.</p>
-                <p><strong>Condition:</strong> Items must be in original condition, unused, and with original packaging.</p>
-                <p><strong>Process:</strong> Contact our customer service team to initiate a return.</p>
-                <p><strong>Refund:</strong> Refunds will be processed within 5-7 business days after we receive the returned item.</p>
-                <p><strong>Shipping:</strong> Return shipping costs are covered by us for defective items.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Product Policy */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-2xl font-bold text-slate-800 mb-4">Product Policy</h3>
-              <div className="space-y-3 text-slate-600">
-                <p><strong>Handmade Nature:</strong> Slight variations in color, texture, and design are natural characteristics.</p>
-                <p><strong>Materials:</strong> We use only high-quality, sustainable materials in our products.</p>
-                <p><strong>Care Instructions:</strong> Each product comes with detailed care instructions.</p>
-                <p><strong>Quality Guarantee:</strong> We stand behind the quality of our products.</p>
-                <p><strong>Custom Orders:</strong> Some items can be customized - contact us for details.</p>
+            <CardContent className="p-8">
+              <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">Our Product Promise</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-600">
+                <div>
+                  <p><strong>100% Authentic:</strong> Every product is genuinely handcrafted with love and care.</p>
+                  <p><strong>Handmade Nature:</strong> Slight variations in color, texture, and design are natural characteristics.</p>
+                  <p><strong>Quality Materials:</strong> We use only high-quality, sustainable materials in our products.</p>
+                </div>
+                <div>
+                  <p><strong>Care Instructions:</strong> Each product comes with detailed care instructions.</p>
+                  <p><strong>Quality Guarantee:</strong> We stand behind the quality of our products.</p>
+                  <p><strong>Custom Orders:</strong> Some items can be customized - contact us for details.</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Contact Information */}
-        <div className="bg-amber-50 rounded-lg p-8 mt-12 text-center">
+        <div className="bg-pink-light rounded-lg p-8 mt-12 text-center hover-lift">
           <h3 className="text-2xl font-bold text-slate-800 mb-4">Get in Touch</h3>
           <p className="text-slate-600 mb-6">
             Have questions about our products or policies? We're here to help!
@@ -123,7 +113,7 @@ const AboutUs = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-600">
             <div>
               <strong>Phone:</strong><br />
-              +91 8279393939
+              +917355451081
             </div>
             <div>
               <strong>Email:</strong><br />
@@ -131,7 +121,7 @@ const AboutUs = () => {
             </div>
             <div>
               <strong>Location:</strong><br />
-              Bhilwara, Rajasthan, India
+              Bengaluru, Karnataka, India
             </div>
           </div>
         </div>

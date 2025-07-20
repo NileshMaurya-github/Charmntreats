@@ -188,14 +188,29 @@ async function sendCustomerConfirmation(apiInstance, orderData) {
           </ul>
         </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://charmntreats.com" style="background: #f59e42; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">Continue Shopping</a>
+        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 30px;">
+          <h3 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">Need Help?</h3>
+          <p style="color: #6b7280; margin: 0 0 15px 0; font-size: 14px;">Our customer support team is here to help you</p>
+          
+          <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+            <a href="mailto:charmntreats@gmail.com" style="background: #f59e42; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">
+              📧 Email Support
+            </a>
+            <a href="tel:+917355451081" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">
+              📞 Call Us
+            </a>
+            <a href="https://www.charmntreats.in" style="background: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">
+              🛍️ Continue Shopping
+            </a>
+          </div>
         </div>
         
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
           <p style="color: #6b7280; font-size: 12px; margin: 0;">
-            Need help? Contact us at charmntreats@gmail.com<br>
-            © 2024 Charmntreats. All rights reserved.
+            © 2024 Charmntreats. All rights reserved.<br>
+            Handcrafted treasures for your special moments.<br>
+            <a href="mailto:charmntreats@gmail.com" style="color: #f59e42; text-decoration: none;">charmntreats@gmail.com</a> | 
+            <a href="tel:+917355451081" style="color: #f59e42; text-decoration: none;">+91 7355451081</a>
           </p>
         </div>
       </div>

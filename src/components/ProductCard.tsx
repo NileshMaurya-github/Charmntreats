@@ -72,26 +72,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
         )}
         
         <div className="absolute top-2 left-2">
-          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+          <Badge variant="secondary" className="bg-gray-100 text-black">
             {product.category}
           </Badge>
         </div>
         
         {product.rating && (
           <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-1 flex items-center gap-1">
-            <Star className="h-3 w-3 text-yellow-400 fill-current" />
-            <span className="text-xs font-medium">{product.rating}</span>
+            <Star className="h-3 w-3 text-black fill-current" />
+            <span className="text-xs font-medium text-black">{product.rating}</span>
           </div>
         )}
       </div>
       
       <CardContent className="p-4">
-        <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors">
+        <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2 group-hover:text-black transition-colors">
           {product.name}
         </h3>
         
         <div className="flex items-center justify-between mb-3">
-          <div className="text-2xl font-bold text-amber-600">
+          <div className="text-2xl font-bold text-black">
             ₹{product.price.toLocaleString()}
           </div>
           
@@ -103,7 +103,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
         
         {product.stock_quantity !== undefined && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
-          <div className="text-xs text-orange-600 mb-2">
+          <div className="text-xs text-black mb-2">
             Only {product.stock_quantity} left in stock!
           </div>
         )}
@@ -112,9 +112,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
           onClick={handleAddToCart}
           disabled={isOutOfStock}
           className={`w-full ${isOutOfStock 
-            ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-amber-600 hover:bg-amber-700'
-          } text-white transition-colors`}
+            ? 'bg-gray-400 cursor-not-allowed text-white' 
+            : 'btn-dark-pink'
+          } transition-colors`}
         >
           {isOutOfStock ? (
             'Out of Stock'

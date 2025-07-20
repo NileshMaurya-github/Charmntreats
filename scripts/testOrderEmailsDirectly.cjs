@@ -186,7 +186,7 @@ async function sendDetailedCustomerEmail(orderData) {
               <p style="color: #666; margin: 0 0 15px 0;">Our customer support team is here to help you</p>
               <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
                 <a href="mailto:charmntreats@gmail.com" style="background: #f59e42; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; font-weight: bold;">📧 Email Support</a>
-                <a href="tel:+919876543210" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Call Us</a>
+                <a href="tel:+917355451081" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Call Us</a>
               </div>
             </div>
             

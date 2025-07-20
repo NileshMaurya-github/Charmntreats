@@ -144,7 +144,7 @@ function generateInvoiceHtml(orderData: OrderData): string {
 
       <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
         <p style="color: #6B7280; margin-bottom: 10px;">Thank you for choosing Charmntreats!</p>
-        <p style="color: #6B7280; font-size: 14px;">For any queries, contact us at Charmntreats@gmail.com or +919625138761</p>
+        <p style="color: #6B7280; font-size: 14px;">For any queries, contact us at charmntreats@gmail.com or +917355451081</p>
       </div>
     </body>
     </html>

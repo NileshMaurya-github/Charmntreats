@@ -20,6 +20,7 @@ import EditProductDialog from '@/components/EditProductDialog';
 import CustomerDataSection from '@/components/CustomerDataSection';
 import OrderManagement from '@/components/OrderManagement';
 import CustomerManagement from '@/components/CustomerManagement';
+import PermanentCustomerManagement from '@/components/PermanentCustomerManagement';
 import BlogManagement from '@/components/BlogManagement';
 import customerDataService from '@/services/customerDataService';
 
@@ -214,7 +215,12 @@ const Admin = () => {
   };
 
   const handleAddProduct = async () => {
+    // Prevent multiple submissions
+    if (loading) return;
+    
     try {
+      setLoading(true);
+      
       const productData = {
         name: newProduct.name,
         description: newProduct.description,
@@ -229,11 +235,15 @@ const Admin = () => {
         stock_quantity: newProduct.stock_quantity ? parseInt(newProduct.stock_quantity) : 0
       };
 
+      console.log('📦 Adding single product:', productData.name);
+
       const { error } = await supabase
         .from('products')
         .insert([productData]);
 
       if (error) throw error;
+
+      console.log('✅ Product added successfully');
 
       toast({
         title: "Success",
@@ -263,6 +273,8 @@ const Admin = () => {
         description: "Failed to add product. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -369,6 +381,73 @@ const Admin = () => {
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
     setEditingProduct(null);
+  };
+
+  const handleUpdateProduct = async (updatedProduct) => {
+    try {
+      console.log('🔄 Admin: Starting product update for:', updatedProduct.name);
+      console.log('📦 Product ID:', updatedProduct.id);
+      console.log('📝 Update data:', {
+        name: updatedProduct.name,
+        price: updatedProduct.price,
+        category: updatedProduct.category,
+        stock_quantity: updatedProduct.stock_quantity,
+        in_stock: updatedProduct.in_stock
+      });
+
+      const updateData = {
+        name: updatedProduct.name,
+        description: updatedProduct.description,
+        price: updatedProduct.price,
+        category: updatedProduct.category,
+        catalog_number: updatedProduct.catalog_number,
+        images: updatedProduct.images,
+        in_stock: updatedProduct.in_stock,
+        featured: updatedProduct.featured,
+        rating: updatedProduct.rating,
+        reviews: updatedProduct.reviews,
+        stock_quantity: updatedProduct.stock_quantity
+        // Removed updated_at since the column doesn't exist in the products table
+      };
+
+      console.log('🔄 Sending update to Supabase...');
+      const { data, error } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', updatedProduct.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
+
+      console.log('✅ Product updated successfully in database');
+      console.log('📦 Updated product data:', data);
+
+      toast({
+        title: "Success",
+        description: "Product updated successfully!",
+      });
+
+      handleCloseEditDialog();
+      fetchData();
+    } catch (error) {
+      console.error('❌ Error updating product:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      toast({
+        title: "Error",
+        description: `Failed to update product: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -524,8 +603,9 @@ const Admin = () => {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
+                  <p className="text-sm font-medium text-gray-600">All Customers</p>
                   <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                  <p className="text-xs text-gray-500">Permanent tracking enabled</p>
                 </div>
               </div>
             </CardContent>
@@ -547,10 +627,11 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="permanent-customers">All Customers</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="homepage">Homepage</TabsTrigger>
@@ -683,9 +764,9 @@ const Admin = () => {
                 <Button 
                   onClick={handleAddProduct} 
                   className="mt-4 bg-amber-600 hover:bg-amber-700"
-                  disabled={!newProduct.name || !newProduct.price || !newProduct.category}
+                  disabled={loading || !newProduct.name || !newProduct.price || !newProduct.category}
                 >
-                  Add Product
+                  {loading ? 'Adding Product...' : 'Add Product'}
                 </Button>
               </CardContent>
             </Card>
@@ -745,6 +826,18 @@ const Admin = () => {
 
           <TabsContent value="customers" className="space-y-6">
             <CustomerDataSection />
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-6">
+            <OrderManagement />
+          </TabsContent>
+
+          <TabsContent value="customers" className="space-y-6">
+            <CustomerDataSection />
+          </TabsContent>
+
+          <TabsContent value="permanent-customers" className="space-y-6">
+            <PermanentCustomerManagement />
           </TabsContent>
 
           <TabsContent value="blog" className="space-y-6">
@@ -954,7 +1047,7 @@ const Admin = () => {
           product={editingProduct}
           isOpen={isEditDialogOpen}
           onClose={handleCloseEditDialog}
-          onProductUpdated={fetchData}
+          onSave={handleUpdateProduct}
         />
       </div>
       

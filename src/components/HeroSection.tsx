@@ -57,10 +57,10 @@ const HeroSection = () => {
 
   if (loading) {
     return (
-      <section className="relative min-h-[40vh] flex items-center bg-gradient-to-br from-amber-50 via-white to-slate-50">
-        <div className="container mx-auto px-4">
+      <section className="relative min-h-[40vh] flex items-center bg-floral-gradient">
+        <div className="container mx-auto compact-container">
           <div className="flex justify-center items-center h-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-primary"></div>
           </div>
         </div>
       </section>
@@ -68,68 +68,71 @@ const HeroSection = () => {
   }
 
   return (
-    <section className="relative min-h-[45vh] flex items-center bg-gradient-to-br from-amber-50 via-white to-slate-50 py-6">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+    <section className="relative min-h-[45vh] flex items-center bg-floral-gradient py-6 overflow-hidden performance-hint">
+      <div className="container mx-auto compact-container">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center grid-optimized">
           {/* Left Content */}
-          <div className="space-y-4">
+          <div className="space-y-4 ultra-smooth layout-stable">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-amber-600">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="text-sm font-medium">{displayContent.hero_subtitle}</span>
+              <div className="flex items-center gap-2 text-pink-primary hero-badge-animate">
+                <Star className="h-4 w-4 fill-current animate-pulse" />
+                <span className="text-sm font-medium">Charms Created With Love</span>
               </div>
               
-              <h1 className="text-3xl lg:text-4xl font-bold text-slate-800 leading-tight">
-                {displayContent.hero_title.split(' ').slice(0, 1).join(' ')}
-                <span className="block text-amber-600">
-                  {displayContent.hero_title.split(' ').slice(1).join(' ')}
+              <h1 className="text-3xl lg:text-4xl font-bold text-black-primary leading-tight hero-title-animate">
+                Discover Handcrafted
+                <span className="block heading-floral hero-title-gradient">
+                  Treasures
                 </span>
               </h1>
               
-              <p className="text-base text-slate-600 leading-relaxed">
+              <p className="text-base text-gray-700 leading-relaxed font-medium hero-description-animate">
                 {displayContent.hero_description}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 hero-buttons-animate">
               <Link to="/products">
-                <Button size="default" className="bg-amber-600 hover:bg-amber-700 text-white h-10 px-6">
+                <Button size="default" className="btn-floral h-10 px-6 premium-button-hover">
                   Shop Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
               
               <Link to="/about">
-                <Button variant="outline" size="default" className="border-amber-600 text-amber-600 hover:bg-amber-50 h-10 px-6">
+                <Button variant="outline" size="default" className="border-pink-primary text-pink-primary hover:bg-pink-50 h-10 px-6 floral-hover premium-outline-hover">
                   About Us
                 </Button>
               </Link>
             </div>
 
             {/* Stats */}
-            <div className="flex gap-6 pt-4 border-t border-slate-200">
-              <div>
-                <div className="text-xl font-bold text-slate-800">500+</div>
-                <div className="text-xs text-slate-600">Happy Customers</div>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-slate-800">1000+</div>
-                <div className="text-xs text-slate-600">Products Sold</div>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-slate-800">4.9★</div>
-                <div className="text-xs text-slate-600">Customer Rating</div>
+            <div className="flex gap-6 pt-4 hero-stats-animate">
+              <div className="floral-divider"></div>
+              <div className="flex gap-6">
+                <div className="stat-item-animate">
+                  <div className="text-xl font-bold text-pink-primary counter-animate">500+</div>
+                  <div className="text-xs text-gray-600 font-medium">Happy Customers</div>
+                </div>
+                <div className="stat-item-animate">
+                  <div className="text-xl font-bold text-pink-primary counter-animate">1000+</div>
+                  <div className="text-xs text-gray-600 font-medium">Products Sold</div>
+                </div>
+                <div className="stat-item-animate">
+                  <div className="text-xl font-bold text-pink-primary counter-animate">4.9★</div>
+                  <div className="text-xs text-gray-600 font-medium">Customer Rating</div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Content - Hero Image */}
-          <div className="relative">
-            <div className="relative z-10">
+          <div className="relative hero-image-animate">
+            <div className="relative z-10 premium-image-container">
               <img
                 src={displayContent.hero_image_url}
                 alt="Handcrafted products"
-                className="w-full h-[300px] object-cover rounded-2xl shadow-2xl"
+                className="w-full h-[300px] object-cover rounded-2xl shadow-2xl premium-image-hover"
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80';
                 }}
@@ -137,27 +140,28 @@ const HeroSection = () => {
             </div>
             
             {/* Floating cards */}
-            <div className="absolute -bottom-3 -left-3 bg-white p-2 rounded-xl shadow-lg z-20">
+            <div className="absolute -bottom-3 -left-3 card-floral p-2 rounded-xl z-20 floral-hover floating-card-left">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                  <span className="text-amber-600 font-bold text-xs">✓</span>
+                <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center pulse-glow">
+                  <span className="text-pink-primary font-bold text-xs">✓</span>
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800 text-xs">100% Handmade</div>
-                  <div className="text-xs text-slate-600">Quality Assured</div>
+                  <div className="font-semibold text-black-primary text-xs">100% Handmade</div>
+                  <div className="text-xs text-gray-600">Quality Assured</div>
                 </div>
               </div>
             </div>
             
-            <div className="absolute -top-3 -right-3 bg-white p-2 rounded-xl shadow-lg z-20">
+            <div className="absolute -top-3 -right-3 card-floral p-2 rounded-xl z-20 floral-hover floating-card-right">
               <div className="text-center">
-                <div className="text-lg font-bold text-amber-600">Free</div>
-                <div className="text-xs text-slate-600">Shipping on ₹599+</div>
+                <div className="text-lg font-bold text-pink-primary">Free</div>
+                <div className="text-xs text-gray-600">Shipping on ₹599+</div>
               </div>
             </div>
             
-            {/* Background decoration */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-amber-100/20 to-transparent rounded-full -z-10"></div>
+            {/* Background decoration with floral gradient */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] rounded-full -z-10 premium-bg-glow" 
+                 style={{background: 'radial-gradient(circle, rgba(255, 105, 180, 0.08) 0%, rgba(248, 187, 217, 0.15) 50%, transparent 100%)'}}></div>
           </div>
         </div>
       </div>

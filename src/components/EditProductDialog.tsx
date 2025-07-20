@@ -29,7 +29,7 @@ interface EditProductDialogProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedProduct: Product) => void;
+  onSave: (updatedProduct: Product) => Promise<void>;
 }
 
 const categories = [
@@ -84,26 +84,73 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     }
   }, [product]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!product) return;
+    if (!product || loading) return;
 
-    const updatedProduct = {
-      ...product,
-      name: formData.name,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      category: formData.category,
-      catalog_number: formData.catalog_number,
-      images: formData.images.length > 0 ? formData.images : ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
-      in_stock: formData.in_stock,
-      featured: formData.featured,
-      rating: formData.rating ? parseFloat(formData.rating) : undefined,
-      reviews: formData.reviews ? parseInt(formData.reviews) : undefined,
-      stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : undefined
-    };
+    setLoading(true);
 
-    onSave(updatedProduct);
+    try {
+      console.log('📝 Submitting product update form...');
+      console.log('📦 Original product:', product);
+      console.log('📝 Form data:', formData);
+
+      // Validate form data
+      if (!formData.name.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Product name is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.price || isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter a valid price greater than 0.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.category) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a category.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedProduct = {
+        ...product,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        category: formData.category,
+        catalog_number: formData.catalog_number.trim(),
+        images: formData.images.length > 0 ? formData.images : ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
+        in_stock: formData.in_stock,
+        featured: formData.featured,
+        rating: formData.rating ? parseFloat(formData.rating) : null,
+        reviews: formData.reviews ? parseInt(formData.reviews) : 0,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0
+      };
+
+      console.log('🔄 Calling onSave with updated product:', updatedProduct);
+      await onSave(updatedProduct);
+      console.log('✅ Product update completed successfully');
+    } catch (error) {
+      console.error('❌ Error in form submission:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update product. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: any) => {

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ShoppingCart, Star, Heart, Truck, Shield, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Star, Heart, Truck, Shield } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Product } from '@/types/product';
@@ -20,6 +20,13 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
+  // Helper function to check if product is actually in stock
+  const isProductInStock = (product: Product | null): boolean => {
+    if (!product) return false;
+    // Check both in_stock flag and stock_quantity
+    return product.in_stock && (product.stock_quantity === undefined || product.stock_quantity > 0);
+  };
 
   useEffect(() => {
     if (id) {
@@ -67,20 +74,31 @@ const ProductDetailPage = () => {
   };
 
   const handleAddToCart = () => {
-    if (!product?.in_stock) {
+    if (!isProductInStock(product)) {
       toast({ title: 'Out of Stock', description: 'This product is currently out of stock.', variant: 'destructive' });
       return;
     }
+    
+    // Check if requested quantity is available
+    if (product?.stock_quantity !== undefined && quantity > product.stock_quantity) {
+      toast({ 
+        title: 'Insufficient Stock', 
+        description: `Only ${product.stock_quantity} items available.`, 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || '',
-      images: product.images,
-      category: product.category,
-      catalogNumber: product.catalogNumber
+      id: product!.id,
+      name: product!.name,
+      price: product!.price,
+      image: product!.images[0] || '',
+      images: product!.images,
+      category: product!.category,
+      catalogNumber: product!.catalogNumber
     });
-    toast({ title: 'Added to Cart', description: `${product.name} added to your cart.` });
+    toast({ title: 'Added to Cart', description: `${product!.name} added to your cart.` });
   };
 
   if (loading) {
@@ -106,7 +124,7 @@ const ProductDetailPage = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Product Not Found</h1>
             <p className="text-gray-600 mb-8">The product you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/products')} className="bg-amber-600 hover:bg-amber-700">
+            <Button onClick={() => navigate('/products')} className="btn-dark-pink">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Products
             </Button>
@@ -127,7 +145,7 @@ const ProductDetailPage = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/products')}
-            className="flex items-center gap-2 text-slate-600 hover:text-amber-600"
+            className="flex items-center gap-2 text-slate-600 hover:text-black"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Products
@@ -135,7 +153,7 @@ const ProductDetailPage = () => {
           <span className="text-slate-400">•</span>
           <span className="text-slate-600">{product.category}</span>
           <span className="text-slate-400">•</span>
-          <span className="text-amber-600 font-medium">{product.name}</span>
+          <span className="text-black font-medium">{product.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -155,7 +173,7 @@ const ProductDetailPage = () => {
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index ? 'border-amber-600' : 'border-gray-200'
+                      selectedImage === index ? 'border-black' : 'border-gray-200'
                     }`}
                   >
                     <img
@@ -172,7 +190,7 @@ const ProductDetailPage = () => {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <Badge className="mb-2 bg-amber-100 text-amber-800">{product.category}</Badge>
+              <Badge className="mb-2 bg-gray-100 text-black">{product.category}</Badge>
               <h1 className="text-3xl font-bold text-slate-800 mb-4">{product.name}</h1>
               
               {product.rating && (
@@ -182,7 +200,7 @@ const ProductDetailPage = () => {
                       <Star
                         key={star}
                         className={`h-5 w-5 ${
-                          star <= product.rating! ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                          star <= product.rating! ? 'text-black fill-current' : 'text-gray-300'
                         }`}
                       />
                     ))}
@@ -204,14 +222,19 @@ const ProductDetailPage = () => {
 
             {/* Stock Status */}
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className={`font-medium ${product.in_stock ? 'text-green-600' : 'text-red-600'}`}>
-                {product.in_stock ? 'In Stock' : 'Out of Stock'}
+              <div className={`w-3 h-3 rounded-full ${isProductInStock(product) ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={`font-medium ${isProductInStock(product) ? 'text-green-600' : 'text-red-600'}`}>
+                {isProductInStock(product) ? 'In Stock' : 'Out of Stock'}
               </span>
+              {product.stock_quantity !== undefined && (
+                <span className="text-sm text-gray-500">
+                  ({product.stock_quantity} available)
+                </span>
+              )}
             </div>
 
             {/* Quantity Selector */}
-            {product.in_stock && (
+            {isProductInStock(product) && (
               <div className="flex items-center gap-4">
                 <span className="text-slate-700 font-medium">Quantity:</span>
                 <div className="flex items-center border rounded-lg">
@@ -223,7 +246,7 @@ const ProductDetailPage = () => {
                   </button>
                   <span className="px-4 py-2 border-x">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => setQuantity(Math.min(product.stock_quantity || 999, quantity + 1))}
                     className="px-3 py-2 hover:bg-gray-100"
                   >
                     +
@@ -234,36 +257,23 @@ const ProductDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
-              {product.in_stock && (product.stock_quantity === undefined || product.stock_quantity > 0) ? (
-                <button
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 text-primary-foreground h-11 rounded-md px-8 flex-1 bg-amber-600 hover:bg-amber-700"
+              {isProductInStock(product) ? (
+                <Button
                   onClick={handleAddToCart}
+                  className="flex-1 btn-dark-pink"
+                  size="lg"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-shopping-cart mr-2 h-5 w-5"
-                  >
-                    <circle cx="8" cy="21" r="1"></circle>
-                    <circle cx="19" cy="21" r="1"></circle>
-                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                  </svg>
+                  <ShoppingCart className="mr-2 h-5 w-5" />
                   Add to Cart
-                </button>
+                </Button>
               ) : (
-                <button
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors disabled:pointer-events-none disabled:opacity-50 text-primary-foreground h-11 rounded-md px-8 flex-1 bg-gray-400 cursor-not-allowed"
+                <Button
                   disabled
+                  className="flex-1 bg-gray-400 cursor-not-allowed text-white"
+                  size="lg"
                 >
                   Out of Stock
-                </button>
+                </Button>
               )}
               <Button variant="outline" size="lg">
                 <Heart className="h-5 w-5" />
@@ -277,9 +287,14 @@ const ProductDetailPage = () => {
                 <div className="space-y-3">
                   <div>
                     <span className="font-semibold">Availability:</span>{' '}
-                    <span className={product.in_stock ? 'text-green-600' : 'text-red-600'}>
-                      {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                    <span className={isProductInStock(product) ? 'text-green-600' : 'text-red-600'}>
+                      {isProductInStock(product) ? 'In Stock' : 'Out of Stock'}
                     </span>
+                    {product.stock_quantity !== undefined && (
+                      <span className="text-sm text-gray-500 ml-2">
+                        ({product.stock_quantity} available)
+                      </span>
+                    )}
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Catalog Number:</span>
@@ -296,19 +311,19 @@ const ProductDetailPage = () => {
             {/* Features */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <Truck className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+                <Truck className="h-8 w-8 text-black mx-auto mb-2" />
                 <div className="text-sm font-medium text-slate-800">Free Shipping</div>
-                <div className="text-xs text-slate-600">On orders above ₹999</div>
+                <div className="text-xs text-slate-600">On orders above ₹599</div>
               </div>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <Shield className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+                <Shield className="h-8 w-8 text-black mx-auto mb-2" />
                 <div className="text-sm font-medium text-slate-800">Secure Payment</div>
                 <div className="text-xs text-slate-600">100% protected</div>
               </div>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <RefreshCw className="h-8 w-8 text-amber-600 mx-auto mb-2" />
-                <div className="text-sm font-medium text-slate-800">Easy Returns</div>
-                <div className="text-xs text-slate-600">7 day return policy</div>
+                <Shield className="h-8 w-8 text-black mx-auto mb-2" />
+                <div className="text-sm font-medium text-slate-800">100% Authentic</div>
+                <div className="text-xs text-slate-600">Genuine products</div>
               </div>
             </div>
           </div>

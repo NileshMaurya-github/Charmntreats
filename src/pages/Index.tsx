@@ -7,10 +7,12 @@ import FeaturedProducts from '@/components/FeaturedProducts';
 import Testimonials from '@/components/Testimonials';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import usePerformanceOptimization from '@/hooks/usePerformanceOptimization';
 
 const Index = () => {
+  usePerformanceOptimization();
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-floral-gradient page-ultra-smooth momentum-scroll">
       <Header />
       <HeroSection />
       <CategoryGrid />

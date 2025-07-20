@@ -51,10 +51,10 @@ const OrderHistory = () => {
 
   const orderStatuses = [
     { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-    { value: 'processing', label: 'Processing', color: 'bg-yellow-100 text-yellow-800', icon: Package },
+    { value: 'processing', label: 'Processing', color: 'bg-gray-100 text-black', icon: Package },
     { value: 'packed', label: 'Packed', color: 'bg-purple-100 text-purple-800', icon: Package },
     { value: 'shipped', label: 'Shipped', color: 'bg-indigo-100 text-indigo-800', icon: Truck },
-    { value: 'out_for_delivery', label: 'Out for Delivery', color: 'bg-orange-100 text-orange-800', icon: Truck },
+    { value: 'out_for_delivery', label: 'Out for Delivery', color: 'bg-gray-100 text-black', icon: Truck },
     { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-800', icon: CheckCircle },
     { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: Package }
   ];
@@ -139,13 +139,13 @@ const OrderHistory = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-slate-600 hover:text-amber-600"
+            className="flex items-center gap-2 text-slate-600 hover:text-black"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Button>
           <span className="text-slate-400">•</span>
-          <span className="text-amber-600 font-medium">Order History</span>
+          <span className="text-black font-medium">Order History</span>
         </div>
 
         <div className="mb-8">
@@ -166,7 +166,7 @@ const OrderHistory = () => {
               <p className="text-slate-500 mb-6">You haven't placed any orders yet. Start shopping to see your orders here.</p>
               <Button 
                 onClick={() => navigate('/products')}
-                className="bg-amber-600 hover:bg-amber-700"
+                className="btn-dark-pink"
               >
                 Start Shopping
               </Button>
@@ -208,7 +208,7 @@ const OrderHistory = () => {
                             step?.isCompleted 
                               ? 'bg-green-500 text-white' 
                               : step?.isCurrent 
-                                ? 'bg-amber-500 text-white' 
+                                ? 'bg-gray-500 text-white' 
                                 : 'bg-slate-200 text-slate-500'
                           }`}>
                             {step?.isCompleted ? (
@@ -306,7 +306,7 @@ const OrderDetailsDialog = ({ order }: { order: Order }) => {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="font-medium">Current Status:</span>
-              <Badge className="bg-amber-100 text-amber-800">
+              <Badge className="bg-gray-100 text-black">
                 {order.order_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </Badge>
             </div>
@@ -379,7 +379,7 @@ const OrderDetailsDialog = ({ order }: { order: Order }) => {
           <div className="border-t pt-4 mt-4">
             <div className="flex justify-between items-center text-lg font-semibold">
               <span>Total Amount:</span>
-              <span className="text-amber-600">₹{order.total_amount.toLocaleString()}</span>
+              <span className="text-black">₹{order.total_amount.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>

@@ -52,7 +52,7 @@ const Vlog = () => {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-800 mb-4">
-            Our <span className="text-amber-600">Gallery</span>
+            Our <span className="text-black">Gallery</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto">
             Take a behind-the-scenes look at our creative process and see how we bring handcrafted treasures to life
@@ -85,7 +85,7 @@ const Vlog = () => {
         {/* About Our Work */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center">
-            About Our <span className="text-amber-600">Craft</span>
+            About Our <span className="text-black">Craft</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>

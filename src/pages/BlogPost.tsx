@@ -158,7 +158,7 @@ const BlogPostPage = () => {
           <div className="text-center py-20">
             <h1 className="text-2xl font-bold text-slate-800 mb-4">Post Not Found</h1>
             <Link to="/blog">
-              <Button className="bg-amber-600 hover:bg-amber-700">
+              <Button className="btn-dark-pink">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Blog
               </Button>
@@ -195,7 +195,7 @@ const BlogPostPage = () => {
                     className="w-full h-64 md:h-80 object-cover"
                   />
                   {post.is_featured && (
-                    <Badge className="absolute top-4 left-4 bg-amber-500 text-white">
+                    <Badge className="absolute top-4 left-4 bg-gray-500 text-white">
                       Featured
                     </Badge>
                   )}
@@ -297,7 +297,7 @@ const BlogPostPage = () => {
                   <Button 
                     type="submit" 
                     disabled={commentLoading}
-                    className="bg-amber-600 hover:bg-amber-700"
+                    className="btn-dark-pink"
                   >
                     {commentLoading ? (
                       'Submitting...'
@@ -353,7 +353,7 @@ const BlogPostPage = () => {
                     <div key={relatedPost.id} className="border-b border-slate-200 last:border-b-0 pb-4 last:pb-0">
                       <Link 
                         to={`/blog/${relatedPost.slug}`}
-                        className="block hover:text-amber-600 transition-colors"
+                        className="block hover:text-black transition-colors"
                       >
                         <h4 className="font-semibold text-slate-800 mb-1 line-clamp-2">
                           {relatedPost.title}
@@ -380,7 +380,7 @@ const BlogPostPage = () => {
                   Discover more handcrafted inspiration and DIY tutorials
                 </p>
                 <Link to="/blog">
-                  <Button className="w-full bg-amber-600 hover:bg-amber-700">
+                  <Button className="w-full btn-dark-pink">
                     View All Posts
                   </Button>
                 </Link>

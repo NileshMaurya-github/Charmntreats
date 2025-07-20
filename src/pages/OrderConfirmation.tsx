@@ -20,7 +20,7 @@ const OrderConfirmation = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Order Not Found</h1>
             <p className="text-gray-600 mb-8">We couldn't find the order details.</p>
-            <Button onClick={() => navigate('/')} className="bg-amber-600 hover:bg-amber-700">
+            <Button onClick={() => navigate('/')} className="btn-dark-pink">
               Go to Home
             </Button>
           </div>
@@ -60,7 +60,7 @@ const OrderConfirmation = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Order ID:</span>
-                    <span className="font-mono text-amber-600">#{orderId}</span>
+                    <span className="font-mono text-black">#{orderId}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Order Date:</span>
@@ -80,7 +80,7 @@ const OrderConfirmation = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Total Amount:</span>
-                    <span className="text-xl font-bold text-amber-600">₹{totalAmount.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-black">₹{totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
               </CardContent>
@@ -204,7 +204,7 @@ const OrderConfirmation = () => {
                 <div className="space-y-2">
                   <Button 
                     onClick={() => navigate('/')}
-                    className="w-full bg-amber-600 hover:bg-amber-700"
+                    className="w-full btn-dark-pink"
                   >
                     Continue Shopping
                   </Button>

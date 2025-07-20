@@ -161,7 +161,7 @@ const EmailTest = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <TestTube className="h-8 w-8 text-amber-600" />
+            <TestTube className="h-8 w-8 text-black" />
             Email System Test - Charmntreats
           </h1>
           <p className="text-gray-600">Test the email functionality to ensure OTP and order confirmation emails are working</p>
@@ -281,9 +281,9 @@ const EmailTest = () => {
                 </ul>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="font-semibold text-yellow-800 mb-2">Troubleshooting:</h3>
-                <ul className="list-disc list-inside space-y-1 text-yellow-700 text-sm">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-black mb-2">Troubleshooting:</h3>
+                <ul className="list-disc list-inside space-y-1 text-black text-sm">
                   <li>If emails fail, check the test results for error details</li>
                   <li>Emails may take 1-2 minutes to arrive</li>
                   <li>Check your spam/junk folder if emails don't appear</li>
