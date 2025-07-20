@@ -325,12 +325,12 @@
     background: var(--floral-gradient-subtle);
   }
 
-  /* Dark pink button styles for Add to Cart */
+  /* Dark pink gradient button styles for Add to Cart */
   .btn-dark-pink {
-    background: var(--pink-dark);
+    background: linear-gradient(135deg, var(--pink-dark) 0%, var(--pink-darker) 100%);
     @apply font-semibold px-4 py-2 rounded-lg relative overflow-hidden;
     @apply transform transition-all duration-500;
-    color: var(--button-text);
+    color: var(--button-text) !important;
     box-shadow: 0 4px 12px rgba(194, 24, 91, 0.3);
     border: 1px solid var(--pink-darker);
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -352,10 +352,10 @@
   }
 
   .btn-dark-pink:hover {
-    background: var(--pink-darker);
+    background: linear-gradient(135deg, var(--pink-darker) 0%, #8e1045 100%);
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 6px 20px rgba(194, 24, 91, 0.4);
-    color: var(--button-text);
+    color: var(--button-text) !important;
   }
 
   .btn-dark-pink:active {
@@ -1804,7 +1804,9 @@ img {
 .performance-hint {
   content-visibility: auto;
   contain-intrinsic-size: 200px;
-}/* Ca
+}
+
+/* Ca
 rt Sidebar Fixes */
 .cart-sidebar-backdrop {
   position: fixed;
@@ -1846,6 +1848,23 @@ rt Sidebar Fixes */
     max-width: 100vw;
     width: 100vw;
   }
+}
+
+/* Cart product info visibility */
+.cart-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 80px;
+  justify-content: flex-start;
+}
+
+.cart-product-name {
+  line-height: 1.3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-height: none;
 }
 
 /* Prevent body scroll when cart is open */
