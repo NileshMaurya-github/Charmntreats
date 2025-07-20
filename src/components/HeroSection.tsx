@@ -14,19 +14,25 @@ interface HomepageContent {
 
 const HeroSection = () => {
   const [content, setContent] = useState<HomepageContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // No loading state
 
   useEffect(() => {
-    fetchHomepageContent();
+    // Skip database call completely for instant loading
+    // fetchHomepageContent();
   }, []);
 
   const fetchHomepageContent = async () => {
     try {
+      // Skip database call for faster loading - use default content
+      setLoading(false);
+      return;
+      
+      // Commented out for performance - uncomment if you need dynamic content
+      /*
       const { data, error } = await supabase
         .from('homepage_content')
-        .select('*')
+        .select('hero_title, hero_subtitle, hero_description, hero_image_url')
         .eq('is_active', true)
-        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -38,6 +44,7 @@ const HeroSection = () => {
       if (data) {
         setContent(data);
       }
+      */
     } catch (error) {
       console.error('Error fetching homepage content:', error);
     } finally {
@@ -45,27 +52,17 @@ const HeroSection = () => {
     }
   };
 
-  // Default content fallback
+  // Optimized default content for fast loading
   const defaultContent = {
     hero_title: 'Discover Handcrafted Treasures',
-    hero_subtitle: 'Handcrafted with Love',
-    hero_description: 'Explore our collection of unique, artisan-made crafts that bring warmth and character to your home. Each piece tells a story of tradition, skill, and passion.',
-    hero_image_url: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80'
+    hero_subtitle: 'Charms Created With Love',
+    hero_description: 'Welcome to Charmntreats - Explore our collection of unique, artisan-made crafts that bring warmth and character to your home.',
+    hero_image_url: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60' // Smaller, faster loading image
   };
 
   const displayContent = content || defaultContent;
 
-  if (loading) {
-    return (
-      <section className="relative min-h-[40vh] flex items-center bg-floral-gradient">
-        <div className="container mx-auto compact-container">
-          <div className="flex justify-center items-center h-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-primary"></div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Remove loading state completely
 
   return (
     <section className="relative min-h-[45vh] flex items-center bg-floral-gradient py-6 overflow-hidden performance-hint">
@@ -93,14 +90,14 @@ const HeroSection = () => {
 
             <div className="flex flex-col sm:flex-row gap-3 hero-buttons-animate">
               <Link to="/products">
-                <Button size="default" className="btn-floral h-10 px-6 premium-button-hover">
+                <Button size="default" className="bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white font-bold h-12 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   Shop Now
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
               
               <Link to="/about">
-                <Button variant="outline" size="default" className="border-pink-primary text-pink-primary hover:bg-pink-50 h-10 px-6 floral-hover premium-outline-hover">
+                <Button variant="outline" size="default" className="border-2 border-pink-600 text-pink-600 bg-white hover:bg-pink-600 hover:text-white font-bold h-12 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   About Us
                 </Button>
               </Link>
@@ -133,8 +130,10 @@ const HeroSection = () => {
                 src={displayContent.hero_image_url}
                 alt="Handcrafted products"
                 className="w-full h-[300px] object-cover rounded-2xl shadow-2xl premium-image-hover"
+                loading="eager"
+                decoding="async"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80';
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60';
                 }}
               />
             </div>

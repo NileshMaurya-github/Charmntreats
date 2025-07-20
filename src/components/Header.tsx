@@ -26,7 +26,8 @@ const Header = () => {
   ];
 
   const handleCategoryClick = (category: string) => {
-    navigate(`/products?category=${encodeURIComponent(category)}`);
+    // Force page refresh for category navigation
+    window.location.href = `/products?category=${encodeURIComponent(category)}`;
     setIsMenuOpen(false);
   };
 
@@ -51,7 +52,7 @@ const Header = () => {
             </Link>
             <div className="relative group">
               <button className="text-slate-700 hover:text-pink-600 transition-colors">
-                Shop Categories
+                Categories
               </button>
               <div className="absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-md border border-pink-200/50 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                 <div className="p-2">
@@ -70,7 +71,7 @@ const Header = () => {
             <button
               className="text-slate-700 hover:text-pink-600 transition-colors"
               onClick={() => {
-                navigate('/products');
+                window.location.href = '/products';
                 setIsMenuOpen(false);
               }}
             >
@@ -157,19 +158,19 @@ const Header = () => {
             <div className="flex flex-col space-y-3">
               <Link
                 to="/"
-                className="text-slate-700 hover:text-amber-600 transition-colors"
+                className="text-slate-700 hover:text-pink-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <div className="border-t border-slate-200 pt-3">
-                <div className="text-sm font-medium text-slate-900 mb-2">Shop Categories</div>
+                <div className="text-sm font-medium text-slate-900 mb-2">Categories</div>
                 <div className="grid grid-cols-2 gap-2">
                   {categories.map((category) => (
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className="text-left text-sm text-slate-600 hover:text-amber-600 transition-colors p-2"
+                      className="text-left text-sm text-slate-600 hover:text-pink-600 transition-colors p-2"
                     >
                       {category}
                     </button>
@@ -177,9 +178,9 @@ const Header = () => {
                 </div>
               </div>
               <button
-                className="text-slate-700 hover:text-amber-600 transition-colors"
+                className="text-slate-700 hover:text-pink-600 transition-colors"
                 onClick={() => {
-                  navigate('/products');
+                  window.location.href = '/products';
                   setIsMenuOpen(false);
                 }}
               >

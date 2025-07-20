@@ -3,9 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthDebug from "@/components/AuthDebug";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -34,6 +35,57 @@ import OthersDelivery from "./pages/blogDetails/OthersDelivery";
 
 const queryClient = new QueryClient();
 
+// Component to handle scroll to top on route change and page refresh
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // Multiple methods to ensure scroll to top works
+    const scrollToTop = () => {
+      // Method 1: Window scroll
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      
+      // Method 2: Document element scroll
+      if (document.documentElement) {
+        document.documentElement.scrollTop = 0;
+      }
+      
+      // Method 3: Body scroll
+      if (document.body) {
+        document.body.scrollTop = 0;
+      }
+      
+      // Method 4: Force with setTimeout for stubborn cases
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 0);
+    };
+
+    scrollToTop();
+  }, [pathname]);
+
+  // Also scroll to top on component mount (page refresh)
+  useEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    scrollToTop();
+    
+    // Also listen for page load event
+    const handleLoad = () => scrollToTop();
+    window.addEventListener('load', handleLoad);
+    
+    return () => window.removeEventListener('load', handleLoad);
+  }, []);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -42,6 +94,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/products" element={<Products />} />

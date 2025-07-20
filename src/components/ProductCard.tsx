@@ -58,9 +58,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
     >
       <div className="relative overflow-hidden">
         <img
-          src={product.images[0] || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'}
+          src={product.images[0] || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=60'}
           alt={product.name}
-          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300 ultra-fast-image"
+          loading="lazy"
+          decoding="async"
         />
         
         {isOutOfStock && (

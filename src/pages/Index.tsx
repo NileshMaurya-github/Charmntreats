@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import CategoryGrid from '@/components/CategoryGrid';
@@ -11,6 +11,12 @@ import usePerformanceOptimization from '@/hooks/usePerformanceOptimization';
 
 const Index = () => {
   usePerformanceOptimization();
+  
+  useEffect(() => {
+    // Ensure page starts at top
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+  
   return (
     <div className="min-h-screen bg-floral-gradient page-ultra-smooth momentum-scroll">
       <Header />

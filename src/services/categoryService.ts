@@ -8,22 +8,25 @@ export interface CategoryData {
 
 export const fetchCategoryData = async (): Promise<CategoryData[]> => {
   try {
+    // Get first product from each category for instant loading
     const { data: products, error } = await supabase
       .from('products')
       .select('category, images')
-      .eq('in_stock', true);
+      .eq('in_stock', true)
+      .not('images', 'is', null)
+      .limit(100); // Limit for faster query
 
     if (error) {
       console.error('Error fetching category data:', error);
       return [];
     }
 
-    // Group products by category
+    // Group products by category and get first image from each
     const categoryMap = new Map<string, { count: number; images: string[] }>();
 
     products?.forEach((product) => {
       const category = product.category;
-      const productImages = product.images || [];
+      const productImages = Array.isArray(product.images) ? product.images : [product.images];
       
       if (!categoryMap.has(category)) {
         categoryMap.set(category, { count: 0, images: [] });
@@ -32,12 +35,10 @@ export const fetchCategoryData = async (): Promise<CategoryData[]> => {
       const categoryData = categoryMap.get(category)!;
       categoryData.count += 1;
       
-      // Add product images to category images (avoid duplicates)
-      productImages.forEach((image: string) => {
-        if (!categoryData.images.includes(image)) {
-          categoryData.images.push(image);
-        }
-      });
+      // Only add the first image from the first product for instant loading
+      if (categoryData.images.length === 0 && productImages.length > 0) {
+        categoryData.images.push(productImages[0]);
+      }
     });
 
     // Convert map to array format

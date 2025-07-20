@@ -33,22 +33,34 @@ const ProductsPage = () => {
   ];
 
   useEffect(() => {
+    // Scroll to top on page load/refresh
+    window.scrollTo(0, 0);
     fetchProducts();
   }, [filterCategory, sortBy]);
+
+  useEffect(() => {
+    // Always scroll to top when component mounts
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      // Lightning-fast query with absolute minimal data
       let query = supabase
         .from('products')
-        .select('*');
+        .select('id, name, price, category, images, catalog_number, in_stock')
+        .limit(20) // Smaller limit for instant loading
+        .eq('in_stock', true) // Only available products
+        .not('images', 'is', null) // Only products with images
+        .not('name', 'is', null); // Only products with names
 
-      // Apply category filter
+      // Apply category filter first for better performance
       if (filterCategory && filterCategory !== 'all') {
         query = query.eq('category', filterCategory);
       }
 
-      // Apply sorting
+      // Simplified sorting for maximum speed
       switch (sortBy) {
         case 'price-low':
           query = query.order('price', { ascending: true });
@@ -56,55 +68,51 @@ const ProductsPage = () => {
         case 'price-high':
           query = query.order('price', { ascending: false });
           break;
-        case 'rating':
-          query = query.order('rating', { ascending: false });
-          break;
-        case 'newest':
-          query = query.order('created_at', { ascending: false });
-          break;
         default:
-          query = query.order('name', { ascending: true });
+          query = query.order('id', { ascending: true }); // Fastest sort by primary key
       }
 
       const { data, error } = await query;
-      console.log('Supabase URL:', SUPABASE_URL);
-      console.log('Fetched products:', data, 'Error:', error, 'Category filter:', filterCategory);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Transform the data to match our Product interface
-      const transformedProducts: Product[] = (data || []).map(product => ({
-        id: product.id,
-        name: product.name,
-        description: product.description || '',
-        price: product.price,
-        category: product.category,
-        images: product.images || ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'],
-        catalogNumber: product.catalog_number,
-        in_stock: product.in_stock,
-        stock_quantity: product.stock_quantity,
-        featured: product.featured || false,
-        rating: product.rating || undefined,
-        reviews: product.reviews || undefined
-      }));
+      // Ultra-fast transformation with minimal processing
+      const transformedProducts: Product[] = (data || []).map(product => {
+        const imageUrl = Array.isArray(product.images) 
+          ? product.images[0] 
+          : product.images || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=50';
+        
+        return {
+          id: product.id,
+          name: product.name,
+          description: '',
+          price: product.price,
+          category: product.category,
+          images: [imageUrl],
+          catalogNumber: product.catalog_number,
+          in_stock: product.in_stock,
+          stock_quantity: undefined,
+          featured: false,
+          rating: undefined,
+          reviews: undefined
+        };
+      });
 
       setProducts(transformedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCategoryChange = (category: string) => {
-    setFilterCategory(category);
+    // Force page refresh for category changes
     if (category === 'all') {
-      navigate('/products');
+      window.location.href = '/products';
     } else {
-      navigate(`/products?category=${encodeURIComponent(category)}`);
+      window.location.href = `/products?category=${encodeURIComponent(category)}`;
     }
   };
 
@@ -112,10 +120,38 @@ const ProductsPage = () => {
     return (
       <div className="min-h-screen bg-floral-gradient page-transition">
         <Header />
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-600 mx-auto"></div>
-            <p className="mt-4 text-slate-700">Loading products...</p>
+        <div className="container mx-auto px-4 py-8">
+          {/* Skeleton Breadcrumb */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <span className="text-slate-400">•</span>
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          
+          {/* Skeleton Header */}
+          <div className="mb-8">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div className="h-4 w-96 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          
+          {/* Skeleton Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="h-10 w-64 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-48 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          
+          {/* Skeleton Product Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="h-48 bg-gray-200 animate-pulse"></div>
+                <div className="p-4">
+                  <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-6 w-1/2 bg-gray-200 rounded animate-pulse mb-3"></div>
+                  <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <Footer />
@@ -124,10 +160,10 @@ const ProductsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-floral-gradient page-transition">
+    <div className="min-h-screen bg-floral-gradient page-transition performance-optimized">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 fast-load">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-6">
           <Button 
@@ -213,9 +249,11 @@ const ProductsPage = () => {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 performance-optimized">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className="fast-load">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
 

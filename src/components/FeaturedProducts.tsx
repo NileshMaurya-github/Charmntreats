@@ -7,7 +7,7 @@ import { Product } from '@/types/product';
 const FeaturedProducts = () => {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // No loading state
 
   useEffect(() => {
     fetchFeaturedProducts();
@@ -81,26 +81,7 @@ const FeaturedProducts = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="compact-section bg-craft-gradient">
-        <div className="container mx-auto compact-container">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-black-primary mb-3">
-              Featured <span className="heading-craft">Creations</span>
-            </h2>
-            <p className="text-lg text-gray-700 max-w-2xl mx-auto font-medium">
-              Discover our most loved handcrafted pieces, each one carefully selected for its exceptional quality and artistry
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-700 font-medium">Loading featured products...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Remove loading state completely
 
   return (
     <section className="compact-section bg-craft-gradient">
