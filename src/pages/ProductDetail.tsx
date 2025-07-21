@@ -9,12 +9,14 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/hooks/use-toast';
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,23 @@ const ProductDetailPage = () => {
       catalogNumber: product!.catalogNumber
     });
     toast({ title: 'Added to Cart', description: `${product!.name} added to your cart.` });
+  };
+
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0] || '',
+        category: product.category,
+        catalogNumber: product.catalogNumber
+      });
+    }
   };
 
   if (loading) {
@@ -275,8 +294,13 @@ const ProductDetailPage = () => {
                   Out of Stock
                 </Button>
               )}
-              <Button variant="outline" size="lg">
-                <Heart className="h-5 w-5" />
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={handleWishlistToggle}
+                className={isInWishlist(product.id) ? 'text-red-500 border-red-500' : ''}
+              >
+                <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
               </Button>
             </div>
 

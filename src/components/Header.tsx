@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import CartSidebar from './CartSidebar';
+import ProfileDropdown from './ProfileDropdown';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCart();
-  const { user, signOut, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const categories = [
@@ -31,10 +32,7 @@ const Header = () => {
     setIsMenuOpen(false);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
+
 
   return (
     <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-pink-200/50 sticky top-0 z-50 transition-all duration-300">
@@ -90,40 +88,7 @@ const Header = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-slate-600 hidden sm:block">
-                  Welcome, {isAdmin ? 'Admin' : user.email}
-                </span>
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="outline" size="sm" className="bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200 transition-colors">
-                      Admin Panel
-                    </Button>
-                  </Link>
-                )}
-                <Link to="/order-history">
-                  <Button variant="outline" size="sm" className="bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200 transition-colors">
-                    My Orders
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-slate-600 hover:text-pink-600 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <Link to="/auth">
-                <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Login
-                </Button>
-              </Link>
-            )}
+            <ProfileDropdown />
 
             {/* Cart Button */}
             <Button
@@ -207,11 +172,9 @@ const Header = () => {
               >
                 Blog
               </Link>
-              <Link to="/auth?admin=1">
-                <Button variant="default" size="sm" className="ml-2 bg-amber-700 text-white">
-                  Admin Login
-                </Button>
-              </Link>
+              <div className="pt-3 border-t border-slate-200">
+                <ProfileDropdown />
+              </div>
             </div>
           </div>
         )}

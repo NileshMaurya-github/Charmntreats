@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -24,6 +25,10 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Wishlist from "./pages/Wishlist";
+import ProfileAddress from "./pages/ProfileAddress";
+import TrackOrder from "./pages/TrackOrder";
+import AddressDemo from "./pages/AddressDemo";
 import DreamCatcher from "./pages/blogDetails/DreamCatcher";
 import Embroidery from "./pages/blogDetails/Embroidery";
 import LippanArt from "./pages/blogDetails/LippanArt";
@@ -91,9 +96,10 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+          <WishlistProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
@@ -103,6 +109,10 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/order-history" element={<OrderHistory />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/profile/address" element={<ProfileAddress />} />
+              <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/address-demo" element={<AddressDemo />} />
               <Route path="/test-emails" element={<TestEmails />} />
               <Route path="/email-test" element={<EmailTest />} />
               <Route path="/auth" element={<Auth />} />
@@ -131,6 +141,7 @@ const App = () => (
             </Routes>
             <AuthDebug />
           </BrowserRouter>
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>

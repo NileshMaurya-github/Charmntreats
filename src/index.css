@@ -1970,6 +1970,7 @@ body.cart-open {
 .cart-quantity-btn:active {
   transform: scale(0.95);
 }
+
 /*
  Force instant scroll behavior and reset position */
 html {
@@ -1983,7 +1984,9 @@ body {
 }
 
 /* Force scroll position reset on all elements */
-html, body, #root {
+html,
+body,
+#root {
   scroll-behavior: auto !important;
 }
 
