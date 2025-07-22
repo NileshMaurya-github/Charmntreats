@@ -50,7 +50,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
             <h2 className="text-lg font-semibold text-gray-800">Shopping Cart ({cartItems.length})</h2>
-            <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100">
+            <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100" aria-label="Close cart">
               <X className="h-5 w-5" />
             </Button>
           </div>

@@ -7,13 +7,14 @@ import { Product } from '@/types/product';
 const FeaturedProducts = () => {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false); // No loading state
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchFeaturedProducts();
   }, []);
 
   const fetchFeaturedProducts = async () => {
+    setLoading(true);
     try {
       // First try to get featured products that are actually in stock
       let { data, error } = await supabase
@@ -21,7 +22,7 @@ const FeaturedProducts = () => {
         .select('*')
         .eq('featured', true)
         .eq('in_stock', true)
-        .limit(6)
+        .limit(8)
         .order('created_at', { ascending: false });
 
       // Filter out products with 0 stock quantity
@@ -39,7 +40,7 @@ const FeaturedProducts = () => {
           .from('products')
           .select('*')
           .eq('in_stock', true)
-          .limit(6)
+          .limit(8)
           .order('created_at', { ascending: false });
         
         // Filter out products with 0 stock quantity
@@ -107,7 +108,7 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 featured-products-grid">
+            <div className="featured-products-grid-container">
               {featuredProducts.map((product, index) => (
                 <div 
                   key={product.id} 

@@ -96,6 +96,7 @@ const Header = () => {
               size="sm"
               onClick={() => setIsCartOpen(true)}
               className="relative text-slate-700 hover:text-pink-600 transition-colors"
+              aria-label="Open shopping cart"
             >
               <ShoppingCart className="h-5 w-5" />
               {getTotalItems() > 0 && (
@@ -111,6 +112,7 @@ const Header = () => {
               size="sm"
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>

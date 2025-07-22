@@ -678,10 +678,10 @@
 /* Premium Category Image Transitions - No Blur */
 .premium-category-transition {
   will-change: opacity, transform;
-  backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
+  backface-visibility: hidden;
   -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
 }
 
 /* Enhanced category image container */
@@ -1998,4 +1998,89 @@ body,
 /* Ensure page always starts at top */
 .page-container {
   scroll-behavior: auto !important;
+}
+
+/* Featured Products Grid - Force Consistent Sizing */
+.featured-products-grid-container {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+}
+
+/* Force all featured product cards to be exactly the same size */
+.featured-products-grid-container .featured-product-item {
+  width: 100%;
+  height: 100%;
+}
+
+.featured-products-grid-container .featured-product-item > div {
+  height: 350px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
+
+/* Force consistent image sizing */
+.featured-products-grid-container .featured-product-item img {
+  height: 180px !important;
+  width: 100% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* Force consistent content area */
+.featured-products-grid-container .featured-product-item .p-4 {
+  padding: 12px !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+/* Force consistent title sizing */
+.featured-products-grid-container .featured-product-item h3 {
+  font-size: 14px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 8px !important;
+  height: 36px !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+/* Force consistent price sizing */
+.featured-products-grid-container .featured-product-item .text-2xl {
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Force consistent button sizing */
+.featured-products-grid-container .featured-product-item button {
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  height: 36px !important;
+  margin-top: auto !important;
+}
+
+/* Responsive grid layout */
+@media (min-width: 640px) {
+  .featured-products-grid-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .featured-products-grid-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .featured-products-grid-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
 }

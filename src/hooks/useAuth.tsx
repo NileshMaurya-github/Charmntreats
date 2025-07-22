@@ -116,9 +116,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+    }).catch(() => {
+      // Ensure loading is set to false even if there's an error
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Fallback to ensure loading is never stuck
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

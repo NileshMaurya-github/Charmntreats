@@ -36,11 +36,7 @@ const Footer = () => {
                   All Products
                 </Link>
               </li>
-              <li>
-                <Link to="/vlog" className="text-slate-300 hover:text-pink-400 transition-colors">
-                  Gallery
-                </Link>
-              </li>
+
               <li>
                 <Link to="/about" className="text-slate-300 hover:text-pink-400 transition-colors">
                   About Us
