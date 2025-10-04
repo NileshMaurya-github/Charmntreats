@@ -7,88 +7,90 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
-import { useEffect } from "react";
-import Index from "./pages/Index";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import OrderHistory from "./pages/OrderHistory";
-import TestEmails from "./pages/TestEmails";
-import EmailTest from "./pages/EmailTest";
-import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
-import Vlog from "./pages/Vlog";
-import AboutUs from "./pages/AboutUs";
-import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import Wishlist from "./pages/Wishlist";
-import ProfileAddress from "./pages/ProfileAddress";
-import TrackOrder from "./pages/TrackOrder";
-import AddressDemo from "./pages/AddressDemo";
-import DreamCatcher from "./pages/blogDetails/DreamCatcher";
-import Embroidery from "./pages/blogDetails/Embroidery";
-import LippanArt from "./pages/blogDetails/LippanArt";
-import ResinArt from "./pages/blogDetails/ResinArt";
-import CandleMaking from "./pages/blogDetails/CandleMaking";
-import Calligraphy from "./pages/blogDetails/Calligraphy";
-import HairAccessories from "./pages/blogDetails/HairAccessories";
-import OthersDelivery from "./pages/blogDetails/OthersDelivery";
+import { useEffect, lazy, Suspense } from "react";
+import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
 
-const queryClient = new QueryClient();
+// Lazy load pages for better performance and code splitting
+const Index = lazy(() => import("./pages/Index"));
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
+const OrderHistory = lazy(() => import("./pages/OrderHistory"));
+const TestEmails = lazy(() => import("./pages/TestEmails"));
+const EmailTest = lazy(() => import("./pages/EmailTest"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Vlog = lazy(() => import("./pages/Vlog"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const ProfileAddress = lazy(() => import("./pages/ProfileAddress"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const AddressDemo = lazy(() => import("./pages/AddressDemo"));
+const DreamCatcher = lazy(() => import("./pages/blogDetails/DreamCatcher"));
+const Embroidery = lazy(() => import("./pages/blogDetails/Embroidery"));
+const LippanArt = lazy(() => import("./pages/blogDetails/LippanArt"));
+const ResinArt = lazy(() => import("./pages/blogDetails/ResinArt"));
+const CandleMaking = lazy(() => import("./pages/blogDetails/CandleMaking"));
+const Calligraphy = lazy(() => import("./pages/blogDetails/Calligraphy"));
+const HairAccessories = lazy(() => import("./pages/blogDetails/HairAccessories"));
+const OthersDelivery = lazy(() => import("./pages/blogDetails/OthersDelivery"));
 
-// Component to handle scroll to top on route change and page refresh
+// Optimized QueryClient for better performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
+
+// Loading component with smooth animation
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
+    <div className="relative">
+      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
+      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-rose-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}></div>
+    </div>
+  </div>
+);
+
+// Component to handle scroll to top on route change with optimized performance
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Multiple methods to ensure scroll to top works
+    // Use requestAnimationFrame for smooth scrolling
     const scrollToTop = () => {
-      // Method 1: Window scroll
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      
-      // Method 2: Document element scroll
-      if (document.documentElement) {
-        document.documentElement.scrollTop = 0;
-      }
-      
-      // Method 3: Body scroll
-      if (document.body) {
-        document.body.scrollTop = 0;
-      }
-      
-      // Method 4: Force with setTimeout for stubborn cases
-      setTimeout(() => {
-        window.scrollTo(0, 0);
+      window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant' // Instant for route changes
+        });
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-      }, 0);
+      });
     };
 
     scrollToTop();
   }, [pathname]);
 
-  // Also scroll to top on component mount (page refresh)
-  useEffect(() => {
-    const scrollToTop = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-    
-    scrollToTop();
-    
-    // Also listen for page load event
-    const handleLoad = () => scrollToTop();
-    window.addEventListener('load', handleLoad);
-    
-    return () => window.removeEventListener('load', handleLoad);
-  }, []);
-
   return null;
+};
+
+// Performance optimization wrapper
+const PerformanceWrapper = ({ children }: { children: React.ReactNode }) => {
+  usePerformanceOptimization();
+  return <>{children}</>;
 };
 
 const App = () => (
@@ -97,50 +99,54 @@ const App = () => (
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="/order-history" element={<OrderHistory />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/profile/address" element={<ProfileAddress />} />
-              <Route path="/track-order" element={<TrackOrder />} />
-              <Route path="/address-demo" element={<AddressDemo />} />
-              <Route path="/test-emails" element={<TestEmails />} />
-              <Route path="/email-test" element={<EmailTest />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/vlog" element={<Vlog />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <Admin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/blogDetails/DreamCatcher" element={<DreamCatcher />} />
-              <Route path="/blogDetails/Embroidery" element={<Embroidery />} />
-              <Route path="/blogDetails/LippanArt" element={<LippanArt />} />
-              <Route path="/blogDetails/ResinArt" element={<ResinArt />} />
-              <Route path="/blogDetails/CandleMaking" element={<CandleMaking />} />
-              <Route path="/blogDetails/Calligraphy" element={<Calligraphy />} />
-              <Route path="/blogDetails/HairAccessories" element={<HairAccessories />} />
-              <Route path="/blogDetails/OthersDelivery" element={<OthersDelivery />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <AuthDebug />
-          </BrowserRouter>
+            <PerformanceWrapper>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ScrollToTop />
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                    <Route path="/order-history" element={<OrderHistory />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/profile/address" element={<ProfileAddress />} />
+                    <Route path="/track-order" element={<TrackOrder />} />
+                    <Route path="/address-demo" element={<AddressDemo />} />
+                    <Route path="/test-emails" element={<TestEmails />} />
+                    <Route path="/email-test" element={<EmailTest />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/vlog" element={<Vlog />} />
+                    <Route path="/about" element={<AboutUs />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute requireAdmin>
+                          <Admin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/blogDetails/DreamCatcher" element={<DreamCatcher />} />
+                    <Route path="/blogDetails/Embroidery" element={<Embroidery />} />
+                    <Route path="/blogDetails/LippanArt" element={<LippanArt />} />
+                    <Route path="/blogDetails/ResinArt" element={<ResinArt />} />
+                    <Route path="/blogDetails/CandleMaking" element={<CandleMaking />} />
+                    <Route path="/blogDetails/Calligraphy" element={<Calligraphy />} />
+                    <Route path="/blogDetails/HairAccessories" element={<HairAccessories />} />
+                    <Route path="/blogDetails/OthersDelivery" element={<OthersDelivery />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+                <AuthDebug />
+              </BrowserRouter>
+            </PerformanceWrapper>
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
