@@ -60,7 +60,7 @@ const Footer = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-rose-500/15 to-pink-500/15 rounded-full animate-pulse"></div>
         
         {/* Floating Particles */}
-        {[...Array(20)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-pink-300 rounded-full animate-twinkle"

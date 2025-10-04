@@ -96,7 +96,7 @@ const ProductDetailPage = () => {
 
       {/* Sparkle Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"

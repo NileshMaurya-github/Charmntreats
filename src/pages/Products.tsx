@@ -209,7 +209,7 @@ const ProductsPage = () => {
         <div className="absolute top-20 right-20 w-64 h-64 bg-gradient-to-br from-rose-400/30 to-pink-500/40 rounded-full animate-pulse blur-2xl"></div>
         
         {/* Floating Particles */}
-        {[...Array(30)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
             className="absolute w-2 h-2 bg-pink-400 rounded-full animate-twinkle"
