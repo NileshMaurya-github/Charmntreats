@@ -1,736 +1,639 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, CreditCard, Truck, MapPin, Phone, User, Plus, Star } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { 
+  CreditCard, 
+  Truck, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  User, 
+  ArrowLeft, 
+  ShieldCheck,
+  Gift,
+  Sparkles,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { sendOrderEmails } from '@/services/simpleEmailService';
-import { orderStorageService } from '@/services/orderStorageService';
-import addressService, { Address } from '@/services/addressService';
 
-interface OrderData {
-  customerInfo: {
-    fullName: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    pincode: string;
-  };
-  items: any[];
-  totalAmount: number;
-  paymentMethod: 'cod' | 'online';
-  orderDate: string;
-  orderId: string;
+interface CustomerDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
 }
 
-const Checkout = () => {
+interface OrderData {
+  id: string;
+  items: any[];
+  customerDetails: CustomerDetails;
+  paymentMethod: 'UPI' | 'COD';
+  totalAmount: number;
+  orderDate: string;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered';
+}
+
+const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, getTotalPrice, clearCart } = useCart();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('cod');
-  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-  const [saveNewAddress, setSaveNewAddress] = useState(true);
   
-  const [customerInfo, setCustomerInfo] = useState({
-    fullName: '',
-    email: user?.email || '',
+  const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
+  const [loading, setLoading] = useState(false);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  
+  const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
+    firstName: '',
+    lastName: '',
+    email: '',
     phone: '',
     address: '',
     city: '',
     state: '',
-    pincode: ''
+    pincode: '',
+    landmark: ''
   });
   
-  // Update email whenever user changes
-  useEffect(() => {
-    if (user?.email) {
-      setCustomerInfo(prev => ({
-        ...prev,
-        email: user.email || ''
-      }));
-    }
-  }, [user?.email]);
+  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'COD'>('COD');
+  const [errors, setErrors] = useState<Partial<CustomerDetails>>({});
 
   useEffect(() => {
-    if (cartItems.length === 0) {
-      navigate('/cart');
+    if (cartItems.length === 0 && step !== 'confirmation') {
+      navigate('/products');
     }
-  }, [cartItems, navigate]);
+  }, [cartItems, step, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      loadSavedAddresses();
-    }
-  }, [user]);
-
-  // Load saved addresses from database
-  const loadSavedAddresses = async () => {
-    if (!user) return;
-    
-    try {
-      console.log('🔍 Fetching saved addresses for user:', user.id);
-      
-      // Use our permanent address service to get addresses
-      const addresses = await addressService.getUserAddresses(user.id);
-      
-      console.log(`📋 Found ${addresses?.length || 0} saved addresses`);
-      
-      // Debug log all addresses
-      addresses?.forEach((addr, index) => {
-        console.log(`Address ${index + 1}: ID=${addr.id}, Name=${addr.name}, Default=${addr.is_default}`);
-      });
-      
-      if (addresses && addresses.length > 0) {
-        setSavedAddresses(addresses);
-        
-        // Auto-select default address if available
-        const defaultAddress = addresses.find(addr => addr.is_default);
-        if (defaultAddress) {
-          console.log('✅ Using default address for checkout:', defaultAddress.id);
-          setSelectedAddressId(defaultAddress.id!);
-          fillAddressForm(defaultAddress);
-          setShowNewAddressForm(false); // Hide new address form when default is available
-        } else {
-          // If no default, select the most recently used address
-          const mostRecentAddress = addresses[0]; // Already sorted by updated_at desc
-          console.log('✅ Using most recent address for checkout:', mostRecentAddress.id);
-          setSelectedAddressId(mostRecentAddress.id!);
-          fillAddressForm(mostRecentAddress);
-          setShowNewAddressForm(false); // Hide new address form when addresses are available
-        }
-      } else {
-        // No saved addresses, show new address form
-        console.log('ℹ️ No saved addresses found, showing new address form');
-        setShowNewAddressForm(true);
-      }
-    } catch (error) {
-      console.error('❌ Error loading addresses:', error);
-      setShowNewAddressForm(true); // Show new address form on error
-      toast({
-        title: "Address Loading Error",
-        description: "Could not load your saved addresses. You can still enter a new address.",
-        variant: "destructive",
-      });
-    }
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0
+    }).format(price);
   };
 
-  const fillAddressForm = (address: Address) => {
-    console.log('🔄 Filling address form with saved address:', address.id);
-    
-    // Make sure we're updating all the required fields
-    setCustomerInfo(prev => ({
-      ...prev,
-      fullName: address.name,
-      phone: address.phone,
-      address: address.address,
-      city: address.city,
-      state: address.state,
-      pincode: address.pincode
-    }));
-    
-    console.log('✅ Address form filled with saved data');
+  const calculateTotal = () => {
+    const subtotal = getTotalPrice();
+    const shipping = subtotal >= 1500 ? 0 : 99;
+    const discount = subtotal > 2000 ? subtotal * 0.1 : subtotal > 1000 ? subtotal * 0.05 : 0;
+    return subtotal + shipping - discount;
   };
 
-  const handleAddressSelection = (addressId: string) => {
-    console.log('🔍 Selected address ID:', addressId);
-    setSelectedAddressId(addressId);
+  const validateForm = (): boolean => {
+    const newErrors: Partial<CustomerDetails> = {};
     
-    const selectedAddress = savedAddresses.find(addr => addr.id === addressId);
-    if (selectedAddress) {
-      console.log('✅ Found selected address:', selectedAddress);
-      fillAddressForm(selectedAddress);
-      setShowNewAddressForm(false);
-    } else {
-      console.error('❌ Could not find address with ID:', addressId);
+    if (!customerDetails.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!customerDetails.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!customerDetails.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(customerDetails.email)) newErrors.email = 'Email is invalid';
+    if (!customerDetails.phone.trim()) newErrors.phone = 'Phone number is required';
+    else if (!/^\d{10}$/.test(customerDetails.phone)) newErrors.phone = 'Phone number must be 10 digits';
+    if (!customerDetails.address.trim()) newErrors.address = 'Address is required';
+    if (!customerDetails.city.trim()) newErrors.city = 'City is required';
+    if (!customerDetails.state.trim()) newErrors.state = 'State is required';
+    if (!customerDetails.pincode.trim()) newErrors.pincode = 'PIN code is required';
+    else if (!/^\d{6}$/.test(customerDetails.pincode)) newErrors.pincode = 'PIN code must be 6 digits';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitDetails = () => {
+    if (validateForm()) {
+      setStep('payment');
     }
-  };
-
-  const handleNewAddressClick = () => {
-    setSelectedAddressId('');
-    setShowNewAddressForm(true);
-    setSaveNewAddress(true); // Default to saving the address
-    
-    // Clear form for new address but keep the email
-    setCustomerInfo(prev => ({
-      ...prev,
-      fullName: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      pincode: ''
-    }));
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setCustomerInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const validateForm = () => {
-    const required = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'pincode'];
-    for (const field of required) {
-      if (!customerInfo[field as keyof typeof customerInfo]) {
-        toast({
-          title: "Missing Information",
-          description: `Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-    
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerInfo.email)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // Validate phone
-    const phoneRegex = /^[6-9]\d{9}$/;
-    if (!phoneRegex.test(customerInfo.phone)) {
-      toast({
-        title: "Invalid Phone Number",
-        description: "Please enter a valid 10-digit phone number",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    return true;
-  };
-
-  const generateOrderId = () => {
-    const timestamp = Date.now().toString();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `CT${timestamp.slice(-6)}${random}`;
   };
 
   const handlePlaceOrder = async () => {
-    if (!validateForm()) return;
-    
     setLoading(true);
     
     try {
-      // Handle address saving/updating
-      if (user) {
-        // Case 1: User is entering a new address and wants to save it
-        if (showNewAddressForm && saveNewAddress && customerInfo.fullName && customerInfo.address) {
-          try {
-            console.log('💾 Saving new address to user profile...');
-            
-            // Check if this is the first address (make it default)
-            const makeDefault = savedAddresses.length === 0;
-            
-            const newAddress: Omit<Address, 'id' | 'created_at' | 'updated_at'> = {
-              user_id: user.id,
-              type: 'Home',
-              name: customerInfo.fullName,
-              address: customerInfo.address,
-              city: customerInfo.city,
-              state: customerInfo.state,
-              pincode: customerInfo.pincode,
-              phone: customerInfo.phone,
-              is_default: makeDefault
-            };
-            
-            console.log('📝 New address data:', newAddress);
-            
-            // Use the permanent address service to save the address
-            const savedAddress = await addressService.addAddress(newAddress);
-              
-            if (savedAddress) {
-              console.log('✅ New address saved successfully with ID:', savedAddress.id);
-              
-              // Update local state with the new address
-              setSavedAddresses(prev => [savedAddress, ...prev]);
-              setSelectedAddressId(savedAddress.id!);
-              
-              toast({
-                title: "Address Saved",
-                description: "Your address has been saved for future orders.",
-              });
-            } else {
-              throw new Error('Failed to save address - null response');
-            }
-          } catch (error) {
-            console.error('❌ Error saving address:', error);
-            toast({
-              title: "Address Save Warning",
-              description: "Your order will be processed, but we couldn't save this address for future use.",
-              variant: "destructive"
-            });
-            // Don't block order placement if address saving fails
-          }
-        } 
-        // Case 2: User is using an existing address
-        else if (!showNewAddressForm && selectedAddressId) {
-          try {
-            console.log('🔄 Updating last used timestamp for selected address:', selectedAddressId);
-            const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
-            if (selectedAddress) {
-              // Update the address to mark it as recently used
-              const updatedAddress = await addressService.updateAddress(selectedAddressId, {
-                updated_at: new Date().toISOString(),
-                user_id: user.id
-              });
-              
-              if (updatedAddress) {
-                console.log('✅ Address usage timestamp updated');
-              } else {
-                console.warn('⚠️ Could not update address timestamp, but continuing with order');
-              }
-            }
-          } catch (error) {
-            console.error('❌ Error updating address usage:', error);
-            // Don't block order placement if address update fails
-          }
-        }
-        // Case 3: User is entering a new address but doesn't want to save it
-        else if (showNewAddressForm && !saveNewAddress) {
-          console.log('ℹ️ User chose not to save the new address');
-        }
-      }
+      // Simulate order processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const orderId = generateOrderId();
-      const shippingCost = getTotalPrice() >= 500 ? 0 : 50;
-      const totalAmount = getTotalPrice() + shippingCost;
-      
-      const orderData: OrderData = {
-        customerInfo,
+      const order: OrderData = {
+        id: `CHM-${Date.now()}`,
         items: cartItems,
-        totalAmount,
+        customerDetails,
         paymentMethod,
+        totalAmount: calculateTotal(),
         orderDate: new Date().toISOString(),
-        orderId
+        status: 'confirmed'
       };
-
-      // Send order confirmation emails using the email service
-      console.log('📧 Sending order confirmation emails...');
-      try {
-        const emailsSent = await sendOrderEmails(orderData);
-        
-        if (emailsSent) {
-          console.log('✅ Order confirmation emails sent successfully!');
-          toast({
-            title: "Emails Sent!",
-            description: "Order confirmation emails have been sent to you and our store.",
-          });
-        } else {
-          console.error('❌ Failed to send some confirmation emails');
-          toast({
-            title: "Email Warning",
-            description: "Order placed but some confirmation emails may not have been sent.",
-            variant: "destructive",
-          });
-        }
-      } catch (emailError) {
-        console.error('❌ Email service error:', emailError);
-        toast({
-          title: "Email Warning", 
-          description: "Order placed but confirmation emails may not have been sent.",
-          variant: "destructive",
-        });
-      }
-
-      // Store order using the order storage service
-      console.log('💾 Storing order...');
-      try {
-        const orderStored = await orderStorageService.storeOrder(orderData);
-        
-        if (orderStored) {
-          console.log('✅ Order stored successfully!');
-        } else {
-          console.error('❌ Failed to store order');
-          toast({
-            title: "Storage Warning",
-            description: "Order placed but may not be saved. Please contact support if needed.",
-            variant: "destructive",
-          });
-        }
-      } catch (storeError) {
-        console.error('❌ Storage service error:', storeError);
-        toast({
-          title: "Storage Warning",
-          description: "Order placed but may not be saved. Please contact support if needed.",
-          variant: "destructive",
-        });
-      }
-
-      // Clear cart
+      
+      setOrderData(order);
+      
+      // Store order in localStorage (in real app, send to backend)
+      const existingOrders = JSON.parse(localStorage.getItem('charmntreats-orders') || '[]');
+      existingOrders.push(order);
+      localStorage.setItem('charmntreats-orders', JSON.stringify(existingOrders));
+      
       clearCart();
-      
-      // Reload addresses to ensure they're up to date for next order
-      if (user) {
-        try {
-          await loadSavedAddresses();
-        } catch (error) {
-          console.error('Failed to reload addresses after order:', error);
-        }
-      }
-      
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${orderId} has been confirmed. Check your email for details.`,
-      });
-
-      // Navigate to order confirmation page
-      navigate(`/order-confirmation/${orderId}`, { 
-        state: { orderData } 
-      });
-
+      setStep('confirmation');
     } catch (error) {
       console.error('Error placing order:', error);
-      toast({
-        title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const shippingCost = getTotalPrice() >= 500 ? 0 : 50;
-  const totalAmount = getTotalPrice() + shippingCost;
+  const handleInputChange = (field: keyof CustomerDetails, value: string) => {
+    setCustomerDetails(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
 
-  return (
-    <div className="min-h-screen bg-floral-gradient page-transition">
-      <Header />
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/cart')}
-            className="flex items-center gap-2 text-slate-600 hover:text-black"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Cart
-          </Button>
-          <span className="text-slate-400">•</span>
-          <span className="text-black font-medium">Checkout</span>
-        </div>
+  if (step === 'confirmation' && orderData) {
+    return (
+      <div className="min-h-screen bg-floral-gradient">
+        <Header />
+        
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto text-center">
+            {/* Success Animation */}
+            <div className="relative mb-8">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center animate-bounce-soft">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-pink-200 rounded-full animate-pulse"></div>
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-rose-200 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <Sparkles className="absolute top-4 right-8 w-6 h-6 text-pink-400 animate-pulse" style={{ animationDelay: '1s' }} />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Customer Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Customer Information
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              🎉 Order Confirmed!
+            </h1>
+            
+            <p className="text-lg text-gray-600 mb-8">
+              Thank you for your order! We're preparing your beautiful handcrafted items with love.
+            </p>
+
+            {/* Order Details Card */}
+            <Card className="card-floral mb-8 text-left">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-green-800">Order #{orderData.id}</span>
+                  <Badge className="bg-green-600 text-white">Confirmed</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              
+              <CardContent className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                    <p className="text-sm text-gray-600">
+                      {customerDetails.firstName} {customerDetails.lastName}<br/>
+                      {customerDetails.address}<br/>
+                      {customerDetails.city}, {customerDetails.state} - {customerDetails.pincode}<br/>
+                      📞 {customerDetails.phone}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Payment Method</h4>
+                    <p className="text-sm text-gray-600">
+                      {paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 UPI Payment'}
+                    </p>
+                    
+                    <h4 className="font-semibold text-gray-900 mb-2 mt-4">Order Total</h4>
+                    <p className="text-lg font-bold text-gray-900">
+                      {formatPrice(orderData.totalAmount)}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={customerInfo.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Enter your email"
-                  />
+                  <h4 className="font-semibold text-gray-900 mb-3">Items Ordered</h4>
+                  <div className="space-y-3">
+                    {orderData.items.map((item, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.name}</p>
+                          <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                        </div>
+                        <p className="font-semibold text-sm">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Delivery Address
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Saved Addresses Selection */}
-                {user && savedAddresses.length > 0 && (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <Label className="text-lg font-medium">Your Saved Addresses</Label>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                        {savedAddresses.length} saved {savedAddresses.length === 1 ? 'address' : 'addresses'} available
-                      </span>
-                    </div>
-                    
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                      <div className="flex items-center gap-2 text-green-700">
-                        <MapPin className="h-4 w-4" />
-                        <span className="text-sm font-medium">Your saved addresses are automatically used for faster checkout</span>
-                      </div>
-                    </div>
-                    
-                    <RadioGroup 
-                      value={selectedAddressId} 
-                      onValueChange={handleAddressSelection}
-                      className="space-y-3 mt-2"
-                    >
-                      {savedAddresses.map((address) => (
-                        <div
-                          key={address.id}
-                          className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                            selectedAddressId === address.id
-                              ? 'border-pink-500 bg-pink-50 shadow-md'
-                              : 'border-gray-200 hover:border-pink-300'
-                          }`}
-                          onClick={() => handleAddressSelection(address.id!)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className={`font-medium text-sm px-2 py-1 rounded ${
-                                address.type === 'Home' ? 'bg-blue-100 text-blue-700' : 
-                                address.type === 'Work' ? 'bg-green-100 text-green-700' : 
-                                'bg-purple-100 text-purple-700'
-                              }`}>{address.type}</div>
-                              {address.is_default && (
-                                <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                  <Star className="h-3 w-3 fill-current" />
-                                  Default
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center">
-                              {selectedAddressId === address.id && (
-                                <span className="text-xs text-pink-600 font-medium mr-2">Selected</span>
-                              )}
-                              <RadioGroupItem
-                                value={address.id!}
-                                id={`address-${address.id}`}
-                                checked={selectedAddressId === address.id}
-                              />
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-600 mt-2">
-                            <div className="font-medium">{address.name}</div>
-                            <div className="mt-1">{address.address}</div>
-                            <div className="mt-1">{address.city}, {address.state} - {address.pincode}</div>
-                            <div className="mt-1 flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {address.phone}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                    
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleNewAddressClick}
-                        className="flex-1"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Use New Address
-                      </Button>
-                      
-                      <Link to="/profile/address" target="_blank">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="bg-pink-100 text-pink-700 hover:bg-pink-200"
-                        >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          Manage Addresses
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => navigate('/products')}
+                className="btn-floral-gradient hover-scale"
+              >
+                Continue Shopping
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="border-rose-300 text-rose-600 hover:bg-rose-50"
+              >
+                Back to Home
+              </Button>
+            </div>
 
-                {/* New Address Form */}
-                {(showNewAddressForm || savedAddresses.length === 0) && (
-                  <div className="space-y-4">
-                    {savedAddresses.length > 0 && (
-                      <div className="border-t pt-4">
-                        <Label className="text-base font-medium">New Address</Label>
-                      </div>
-                    )}
+            {/* Expected Delivery */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-blue-800">
+                <Truck className="w-5 h-5" />
+                <span className="font-medium">Expected Delivery: 5-7 business days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-floral-gradient">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-8">
+          <button onClick={() => navigate('/')} className="hover:text-rose-600 transition-colors">
+            Home
+          </button>
+          <span>/</span>
+          <button onClick={() => navigate('/cart')} className="hover:text-rose-600 transition-colors">
+            Cart
+          </button>
+          <span>/</span>
+          <span className="text-rose-600 font-medium">Checkout</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Progress Steps */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className={`flex items-center gap-2 ${step === 'details' ? 'text-rose-600' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step === 'details' ? 'bg-rose-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  1
+                </div>
+                <span className="font-medium">Details</span>
+              </div>
+              
+              <div className="w-12 h-0.5 bg-gray-300"></div>
+              
+              <div className={`flex items-center gap-2 ${step === 'payment' ? 'text-rose-600' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step === 'payment' ? 'bg-rose-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  2
+                </div>
+                <span className="font-medium">Payment</span>
+              </div>
+            </div>
+
+            {step === 'details' && (
+              <Card className="card-floral">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-rose-600" />
+                    Delivery Information
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name *</Label>
+                      <Input
+                        id="firstName"
+                        value={customerDetails.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        className={`input-floral ${errors.firstName ? 'border-red-500' : ''}`}
+                        placeholder="Enter your first name"
+                      />
+                      {errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                      )}
+                    </div>
                     
                     <div>
-                      <Label htmlFor="fullName">Full Name *</Label>
+                      <Label htmlFor="lastName">Last Name *</Label>
                       <Input
-                        id="fullName"
-                        value={customerInfo.fullName}
-                        onChange={(e) => handleInputChange('fullName', e.target.value)}
-                        placeholder="Enter full name"
+                        id="lastName"
+                        value={customerDetails.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        className={`input-floral ${errors.lastName ? 'border-red-500' : ''}`}
+                        placeholder="Enter your last name"
                       />
+                      {errors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={customerDetails.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className={`input-floral ${errors.email ? 'border-red-500' : ''}`}
+                        placeholder="your@email.com"
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                      )}
                     </div>
                     
                     <div>
                       <Label htmlFor="phone">Phone Number *</Label>
                       <Input
                         id="phone"
-                        value={customerInfo.phone}
+                        value={customerDetails.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="Enter phone number"
+                        className={`input-floral ${errors.phone ? 'border-red-500' : ''}`}
+                        placeholder="10-digit mobile number"
+                        maxLength={10}
                       />
+                      {errors.phone && (
+                        <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address">Full Address *</Label>
+                    <Input
+                      id="address"
+                      value={customerDetails.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      className={`input-floral ${errors.address ? 'border-red-500' : ''}`}
+                      placeholder="House no, Street, Area"
+                    />
+                    {errors.address && (
+                      <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="landmark">Landmark (Optional)</Label>
+                    <Input
+                      id="landmark"
+                      value={customerDetails.landmark}
+                      onChange={(e) => handleInputChange('landmark', e.target.value)}
+                      className="input-floral"
+                      placeholder="Near any famous location"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={customerDetails.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        className={`input-floral ${errors.city ? 'border-red-500' : ''}`}
+                        placeholder="City name"
+                      />
+                      {errors.city && (
+                        <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                      )}
                     </div>
                     
                     <div>
-                      <Label htmlFor="address">Street Address *</Label>
-                      <Textarea
-                        id="address"
-                        value={customerInfo.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        placeholder="Enter your complete address"
-                        rows={3}
+                      <Label htmlFor="state">State *</Label>
+                      <Input
+                        id="state"
+                        value={customerDetails.state}
+                        onChange={(e) => handleInputChange('state', e.target.value)}
+                        className={`input-floral ${errors.state ? 'border-red-500' : ''}`}
+                        placeholder="State name"
                       />
+                      {errors.state && (
+                        <p className="text-red-500 text-xs mt-1">{errors.state}</p>
+                      )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="city">City *</Label>
-                        <Input
-                          id="city"
-                          value={customerInfo.city}
-                          onChange={(e) => handleInputChange('city', e.target.value)}
-                          placeholder="City"
+                    <div>
+                      <Label htmlFor="pincode">PIN Code *</Label>
+                      <Input
+                        id="pincode"
+                        value={customerDetails.pincode}
+                        onChange={(e) => handleInputChange('pincode', e.target.value)}
+                        className={`input-floral ${errors.pincode ? 'border-red-500' : ''}`}
+                        placeholder="6-digit PIN"
+                        maxLength={6}
+                      />
+                      {errors.pincode && (
+                        <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-4">
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate('/cart')}
+                      className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Cart
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleSubmitDetails}
+                      className="btn-floral-gradient hover-scale"
+                    >
+                      Continue to Payment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {step === 'payment' && (
+              <Card className="card-floral">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-rose-600" />
+                    Payment Method
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
+                  {/* Payment Options */}
+                  <div className="space-y-4">
+                    <div 
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'COD' 
+                          ? 'border-rose-500 bg-rose-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setPaymentMethod('COD')}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          checked={paymentMethod === 'COD'}
+                          onChange={() => setPaymentMethod('COD')}
+                          className="text-rose-600"
                         />
-                      </div>
-                      <div>
-                        <Label htmlFor="state">State *</Label>
-                        <Input
-                          id="state"
-                          value={customerInfo.state}
-                          onChange={(e) => handleInputChange('state', e.target.value)}
-                          placeholder="State"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="pincode">Pincode *</Label>
-                        <Input
-                          id="pincode"
-                          value={customerInfo.pincode}
-                          onChange={(e) => handleInputChange('pincode', e.target.value)}
-                          placeholder="Pincode"
-                        />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">Cash on Delivery</h4>
+                          <p className="text-sm text-gray-600">Pay when your order arrives</p>
+                        </div>
+                        <div className="text-2xl">💵</div>
                       </div>
                     </div>
 
-                    {/* Save Address Option */}
-                    {user && (
-                      <div className="flex items-center space-x-3 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                    <div 
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'UPI' 
+                          ? 'border-rose-500 bg-rose-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setPaymentMethod('UPI')}
+                    >
+                      <div className="flex items-center gap-3">
                         <input
-                          type="checkbox"
-                          id="saveAddress"
-                          checked={saveNewAddress}
-                          onChange={(e) => setSaveNewAddress(e.target.checked)}
-                          className="rounded text-pink-600 w-6 h-6"
+                          type="radio"
+                          checked={paymentMethod === 'UPI'}
+                          onChange={() => setPaymentMethod('UPI')}
+                          className="text-rose-600"
                         />
-                        <div>
-                          <Label htmlFor="saveAddress" className="text-base font-medium cursor-pointer text-blue-800">
-                            Save this address for future orders
-                          </Label>
-                          <p className="text-sm text-blue-600 mt-1">
-                            Your address will be securely saved so you don't have to re-enter it next time.
-                            This will also appear in your "My Address" section.
-                          </p>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">UPI Payment</h4>
+                          <p className="text-sm text-gray-600">Pay instantly via UPI</p>
                         </div>
+                        <div className="text-2xl">💳</div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Method</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup value={paymentMethod} onValueChange={(value: 'cod' | 'online') => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                    <RadioGroupItem value="cod" id="cod" />
-                    <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
-                      <Truck className="h-5 w-5 text-black" />
-                      Cash on Delivery (COD)
-                    </Label>
+                  {/* Security Badge */}
+                  <div className="flex items-center justify-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <ShieldCheck className="w-5 h-5 text-green-600" />
+                    <span className="text-green-800 font-medium">Secure & Encrypted Payment</span>
                   </div>
-                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                    <RadioGroupItem value="online" id="online" />
-                    <Label htmlFor="online" className="flex items-center gap-2 cursor-pointer">
-                      <CreditCard className="h-5 w-5 text-black" />
-                      Online Payment
-                    </Label>
+
+                  <div className="flex justify-between pt-4">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setStep('details')}
+                      className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Details
+                    </Button>
+                    
+                    <Button 
+                      onClick={handlePlaceOrder}
+                      disabled={loading}
+                      className="btn-floral-gradient hover-scale"
+                    >
+                      {loading ? 'Processing...' : 'Place Order'}
+                    </Button>
                   </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
+            <Card className="card-floral sticky top-8">
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle className="text-lg">Order Summary</CardTitle>
               </CardHeader>
+              
               <CardContent className="space-y-4">
-                <div className="space-y-3">
+                {/* Cart Items */}
+                <div className="space-y-3 max-h-60 overflow-y-auto">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{item.name}</div>
-                        <div className="text-xs text-slate-600">Qty: {item.quantity}</div>
+                    <div key={item.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 object-cover rounded-lg"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm line-clamp-1">{item.name}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                       </div>
-                      <div className="font-medium">
-                        ₹{(item.price * item.quantity).toLocaleString()}
-                      </div>
+                      <p className="font-semibold text-sm">
+                        {formatPrice(item.price * item.quantity)}
+                      </p>
                     </div>
                   ))}
                 </div>
-                
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
+
+                <Separator />
+
+                {/* Price Breakdown */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>₹{getTotalPrice().toLocaleString()}</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  
+                  <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                      {shippingCost === 0 ? 'Free' : `₹${shippingCost}`}
+                    <span className={getTotalPrice() >= 1500 ? 'text-green-600' : ''}>
+                      {getTotalPrice() >= 1500 ? 'FREE' : formatPrice(99)}
                     </span>
                   </div>
-                  <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                    <span>Total</span>
-                    <span>₹{totalAmount.toLocaleString()}</span>
+                  
+                  {(getTotalPrice() > 1000) && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-{formatPrice(getTotalPrice() > 2000 ? getTotalPrice() * 0.1 : getTotalPrice() * 0.05)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>{formatPrice(calculateTotal())}</span>
+                </div>
+
+                {/* Free Shipping Badge */}
+                {getTotalPrice() >= 1500 && (
+                  <div className="flex items-center justify-center gap-2 p-2 bg-green-50 rounded-lg">
+                    <Gift className="w-4 h-4 text-green-600" />
+                    <span className="text-green-800 text-sm font-medium">Free Shipping Applied!</span>
                   </div>
-                </div>
-
-                <Button 
-                  onClick={handlePlaceOrder}
-                  disabled={loading}
-                  className="w-full btn-dark-pink h-12"
-                >
-                  {loading ? 'Placing Order...' : `Place Order - ₹${totalAmount.toLocaleString()}`}
-                </Button>
-
-                <div className="text-xs text-slate-500 text-center">
-                  By placing this order, you agree to our terms and conditions
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -742,4 +645,4 @@ const Checkout = () => {
   );
 };
 
-export default Checkout;
+export default CheckoutPage;

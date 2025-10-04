@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import CategoryGrid from '@/components/CategoryGrid';
 import FeaturedProducts from '@/components/FeaturedProducts';
+import VideoShowcase from '@/components/VideoShowcase';
 import Testimonials from '@/components/Testimonials';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
@@ -18,11 +19,12 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen bg-floral-gradient page-ultra-smooth momentum-scroll">
+    <div className="min-h-screen relative page-ultra-smooth momentum-scroll">
       <Header />
       <HeroSection />
       <CategoryGrid />
       <FeaturedProducts />
+      <VideoShowcase />
       <Testimonials />
       <Footer />
       <WhatsAppButton />

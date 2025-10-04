@@ -11,6 +11,13 @@ export interface Product {
   featured?: boolean;
   rating?: number;
   reviews?: number;
+  tags?: string[];
+  materials?: string[];
+  size?: string;
+  care_instructions?: string;
+  weight?: string;
+  color?: string;
+  style?: string;
 }
 
 export interface CartItem extends Product {

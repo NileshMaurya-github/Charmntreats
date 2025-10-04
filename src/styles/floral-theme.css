@@ -1,0 +1,338 @@
+/* Floral E-Commerce Theme - Enhanced Styles */
+
+/* Beautiful Floral Gradient Buttons */
+.btn-floral {
+  @apply bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl;
+}
+
+.btn-floral-gradient {
+  @apply bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:via-pink-600 hover:to-purple-600 text-white font-bold px-8 py-3 rounded-xl transition-all duration-500 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl;
+}
+
+.btn-floral-outline {
+  @apply border-2 border-rose-300 text-rose-600 hover:bg-rose-50 font-medium transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+.btn-floral-ghost {
+  @apply text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-medium transition-all duration-300;
+}
+
+/* Card Enhancements */
+.card-floral {
+  @apply bg-white/90 backdrop-blur-sm border border-rose-100 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl overflow-hidden;
+}
+
+.card-floral-hover {
+  @apply hover:-translate-y-2 hover:rotate-1 transition-all duration-500;
+}
+
+/* Hover and Scale Effects */
+.hover-scale {
+  @apply transition-transform duration-300 hover:scale-105 active:scale-95;
+}
+
+.hover-float {
+  @apply transition-transform duration-700 hover:-translate-y-3;
+}
+
+.hover-glow {
+  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-rose-200/50;
+}
+
+/* Gradient Backgrounds */
+.bg-floral-gradient {
+  background: linear-gradient(135deg, 
+    rgba(251, 207, 232, 0.1) 0%, 
+    rgba(253, 230, 138, 0.1) 25%, 
+    rgba(252, 231, 243, 0.1) 50%, 
+    rgba(236, 254, 255, 0.1) 75%, 
+    rgba(255, 228, 230, 0.1) 100%);
+}
+
+.bg-floral-hero {
+  background: linear-gradient(135deg, 
+    #fdf2f8 0%, 
+    #fef7ff 25%, 
+    #fff1f2 50%, 
+    #fef3c7 75%, 
+    #fdf2f8 100%);
+}
+
+.bg-floral-section {
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(254, 242, 242, 0.3) 25%, 
+    rgba(253, 230, 138, 0.1) 50%, 
+    rgba(252, 231, 243, 0.2) 75%, 
+    rgba(255, 255, 255, 1) 100%);
+}
+
+/* Text Gradients */
+.text-floral-gradient {
+  @apply bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+.text-floral-primary {
+  @apply text-rose-700;
+}
+
+.text-floral-secondary {
+  @apply text-pink-600;
+}
+
+/* Enhanced Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(1deg); }
+  50% { transform: translateY(-20px) rotate(0deg); }
+  75% { transform: translateY(-10px) rotate(-1deg); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.animate-bounce-soft {
+  animation: bounce-soft 2s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.8s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.8s ease-out forwards;
+}
+
+/* Animation Delays */
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-500 { animation-delay: 500ms; }
+.animate-delay-700 { animation-delay: 700ms; }
+.animate-delay-1000 { animation-delay: 1000ms; }
+
+/* Product Card Enhancements */
+.product-card {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-rose-100/50;
+}
+
+.product-card:hover {
+  @apply -translate-y-2 shadow-2xl shadow-rose-200/20;
+}
+
+.product-image {
+  @apply transition-transform duration-700 group-hover:scale-110;
+}
+
+.product-badge {
+  @apply bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md;
+}
+
+/* Cart Enhancements */
+.cart-item {
+  @apply bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border border-rose-100/50 transition-all duration-300;
+}
+
+.cart-item:hover {
+  @apply shadow-lg transform scale-105;
+}
+
+.cart-sidebar {
+  @apply bg-white/95 backdrop-blur-lg border-l border-rose-200/50 shadow-2xl;
+}
+
+/* Input Field Enhancements */
+.input-floral {
+  @apply border-rose-200 focus:border-rose-400 focus:ring-rose-200 bg-white/80 backdrop-blur-sm transition-all duration-300 rounded-lg;
+}
+
+.input-floral:focus {
+  @apply shadow-lg shadow-rose-200/30;
+}
+
+/* Loading Animations */
+.loading-shimmer {
+  @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse;
+}
+
+.loading-dots::after {
+  content: '';
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-slide-in-right,
+  .animate-slide-in-left {
+    animation-duration: 0.5s;
+  }
+  
+  .hover-scale:hover,
+  .hover-float:hover {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .animate-float,
+  .animate-pulse-soft,
+  .animate-shimmer,
+  .animate-bounce-soft {
+    animation: none;
+  }
+  
+  .hover-scale,
+  .hover-float,
+  .hover-glow {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .btn-floral {
+    @apply bg-rose-700 hover:bg-rose-800;
+  }
+  
+  .text-floral-gradient {
+    @apply text-rose-800;
+  }
+  
+  .card-floral {
+    @apply border-2 border-rose-300;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-pulse-soft,
+  .animate-shimmer,
+  .animate-bounce-soft,
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-slide-in-right,
+  .animate-slide-in-left {
+    animation: none;
+  }
+  
+  .hover-scale,
+  .hover-float,
+  .card-floral-hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Utility Classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.glass-effect {
+  @apply bg-white/80 backdrop-blur-lg border border-white/20;
+}
+
+.shadow-floral {
+  box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.1), 0 4px 6px -2px rgba(236, 72, 153, 0.05);
+}
+
+.shadow-floral-lg {
+  box-shadow: 0 20px 40px -10px rgba(236, 72, 153, 0.15), 0 8px 16px -4px rgba(236, 72, 153, 0.1);
+}
