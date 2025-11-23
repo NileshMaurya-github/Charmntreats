@@ -23,6 +23,10 @@ import {
 import { useCart } from '@/contexts/CartContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { orderStorageService } from '@/services/orderStorageService';
+import { orderEmailService } from '@/services/orderEmailService';
+
+import { useRazorpay } from '@/hooks/useRazorpay';
 
 interface CustomerDetails {
   firstName: string;
@@ -49,6 +53,7 @@ interface OrderData {
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, getTotalPrice, clearCart } = useCart();
+  const { isLoaded, displayRazorpay } = useRazorpay();
   
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [loading, setLoading] = useState(false);
@@ -115,35 +120,106 @@ const CheckoutPage = () => {
     }
   };
 
+  const processOrder = async (paymentType: 'cod' | 'online', paymentId?: string) => {
+    const order: OrderData = {
+      id: `CHM-${Date.now()}`,
+      items: cartItems,
+      customerDetails,
+      paymentMethod: paymentType === 'cod' ? 'COD' : 'UPI',
+      totalAmount: calculateTotal(),
+      orderDate: new Date().toISOString(),
+      status: 'confirmed'
+    };
+    
+    setOrderData(order);
+    
+    // Store order in Supabase (with localStorage fallback)
+    const stored = await orderStorageService.storeOrder({
+      customerInfo: {
+        fullName: `${customerDetails.firstName} ${customerDetails.lastName}`,
+        email: customerDetails.email,
+        phone: customerDetails.phone,
+        address: customerDetails.address,
+        city: customerDetails.city,
+        state: customerDetails.state,
+        pincode: customerDetails.pincode
+      },
+      items: cartItems,
+      totalAmount: order.totalAmount,
+      paymentMethod: paymentType === 'cod' ? 'cod' : 'online',
+      orderDate: order.orderDate,
+      orderId: order.id
+    });
+
+    if (stored) {
+      // Send confirmation emails
+      await orderEmailService.sendOrderConfirmationEmails({
+        customerInfo: {
+          fullName: `${customerDetails.firstName} ${customerDetails.lastName}`,
+          email: customerDetails.email,
+          phone: customerDetails.phone,
+          address: customerDetails.address,
+          city: customerDetails.city,
+          state: customerDetails.state,
+          pincode: customerDetails.pincode
+        },
+        items: cartItems,
+        totalAmount: order.totalAmount,
+        paymentMethod: paymentType === 'cod' ? 'cod' : 'online',
+        orderDate: order.orderDate,
+        orderId: order.id
+      });
+    }
+    
+    clearCart();
+    setStep('confirmation');
+    setLoading(false);
+  };
+
   const handlePlaceOrder = async () => {
     setLoading(true);
     
     try {
-      // Simulate order processing
+      if (paymentMethod === 'UPI') {
+        if (!isLoaded) {
+          alert('Razorpay SDK failed to load. Please check your internet connection.');
+          setLoading(false);
+          return;
+        }
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_HERE',
+          amount: calculateTotal() * 100, // Amount in paise
+          currency: 'INR',
+          name: 'Charmntreats',
+          description: 'Handcrafted with love',
+          image: '/logo.png', // Add your logo path
+          handler: async function (response: any) {
+            // Payment successful
+            console.log('Payment successful:', response);
+            await processOrder('online', response.razorpay_payment_id);
+          },
+          prefill: {
+            name: `${customerDetails.firstName} ${customerDetails.lastName}`,
+            email: customerDetails.email,
+            contact: customerDetails.phone,
+          },
+          theme: {
+            color: '#e11d48', // Rose-600
+          },
+        };
+
+        displayRazorpay(options);
+        setLoading(false); // Stop loading as modal opens
+        return;
+      }
+
+      // COD flow
       await new Promise(resolve => setTimeout(resolve, 2000));
+      await processOrder('cod');
       
-      const order: OrderData = {
-        id: `CHM-${Date.now()}`,
-        items: cartItems,
-        customerDetails,
-        paymentMethod,
-        totalAmount: calculateTotal(),
-        orderDate: new Date().toISOString(),
-        status: 'confirmed'
-      };
-      
-      setOrderData(order);
-      
-      // Store order in localStorage (in real app, send to backend)
-      const existingOrders = JSON.parse(localStorage.getItem('charmntreats-orders') || '[]');
-      existingOrders.push(order);
-      localStorage.setItem('charmntreats-orders', JSON.stringify(existingOrders));
-      
-      clearCart();
-      setStep('confirmation');
     } catch (error) {
       console.error('Error placing order:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -204,7 +280,7 @@ const CheckoutPage = () => {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Payment Method</h4>
                     <p className="text-sm text-gray-600">
-                      {paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 UPI Payment'}
+                      {paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 Online Payment'}
                     </p>
                     
                     <h4 className="font-semibold text-gray-900 mb-2 mt-4">Order Total</h4>
@@ -531,8 +607,8 @@ const CheckoutPage = () => {
                           className="text-rose-600"
                         />
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">UPI Payment</h4>
-                          <p className="text-sm text-gray-600">Pay instantly via UPI</p>
+                          <h4 className="font-semibold text-gray-900">Online Payment</h4>
+                          <p className="text-sm text-gray-600">UPI, Cards, Netbanking, Wallets</p>
                         </div>
                         <div className="text-2xl">💳</div>
                       </div>

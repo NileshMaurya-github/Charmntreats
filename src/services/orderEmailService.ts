@@ -17,11 +17,15 @@ interface OrderData {
 }
 
 class OrderEmailService {
-  private BREVO_API_KEY = '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';
+  private BREVO_API_KEY = import.meta.env.VITE_BREVO_API_KEY || '';
   private BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
   // Send order confirmation emails (both customer and store)
   async sendOrderConfirmationEmails(orderData: OrderData): Promise<boolean> {
+    if (!this.BREVO_API_KEY) {
+      console.error('❌ Missing VITE_BREVO_API_KEY in environment variables');
+      return false;
+    }
     console.log('🚀 Starting email sending process for order:', orderData.orderId);
     
     let customerEmailSent = false;

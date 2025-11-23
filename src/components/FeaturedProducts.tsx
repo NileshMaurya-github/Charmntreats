@@ -424,11 +424,18 @@ const FeaturedProducts = () => {
                               src={product.images[0]}
                               alt={product.name}
                               className="w-full h-full object-cover transition-all duration-700 group-hover:scale-125 filter brightness-90 group-hover:brightness-110"
-                              loading="lazy"
+                              loading="eager"
+                              crossOrigin="anonymous"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = '/placeholder.svg';
+                                console.error('Failed to load image:', product.images[0]);
+                                target.src = 'https://via.placeholder.com/400x400/ec4899/ffffff?text=' + encodeURIComponent(product.name.substring(0, 20));
                               }}
+                              onLoad={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.opacity = '1';
+                              }}
+                              style={{ opacity: 0, transition: 'opacity 0.3s ease-in' }}
                             />
                             
                             {/* Enhanced Gradient Overlay */}

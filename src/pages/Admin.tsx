@@ -28,13 +28,17 @@ const Admin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [productsCount, setProductsCount] = useState(0);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsTotalPages, setProductsTotalPages] = useState(1);
+  const productsPageSize = 10;
+
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [customersCount, setCustomersCount] = useState(0);
+
   const [testimonials, setTestimonials] = useState([]);
   const [testimonialsCount, setTestimonialsCount] = useState(0);
   const [homepageContent, setHomepageContent] = useState(null);
-  const [customerData, setCustomerData] = useState([]);
-  const [loginHistory, setLoginHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -85,48 +89,40 @@ const Admin = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [productsPage]);
 
   const fetchData = async () => {
     setLoading(true);
     console.log('🚀 Starting admin data fetch...');
     
     try {
+      const productsStart = (productsPage - 1) * productsPageSize;
+      const productsEnd = productsStart + productsPageSize - 1;
+
       // Fetch all data in parallel for better performance
       const [
         productsResult,
-        ordersResult,
-        customersResult,
+        productsCountResult,
+        ordersCountResult,
+        customersCountResult,
         testimonialsResult,
         homepageResult
       ] = await Promise.allSettled([
-        // Fetch products
+        // Fetch products (paginated)
         supabase
           .from('products')
           .select('*')
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .range(productsStart, productsEnd),
         
-        // Fetch orders (last 3 months)
-        (() => {
-          const threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-          return supabase
-            .from('orders')
-            .select(`
-              *,
-              order_items (*)
-            `)
-            .gte('created_at', threeMonthsAgo.toISOString())
-            .order('created_at', { ascending: false })
-            .limit(50); // Limit to improve performance
-        })(),
+        // Fetch products count
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+
+        // Fetch orders count
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
         
-        // Fetch customer profiles
-        supabase
-          .from('customer_profiles')
-          .select('*')
-          .order('last_login_at', { ascending: false })
-          .limit(100), // Limit to improve performance
+        // Fetch customers count
+        supabase.from('profiles' as any).select('*', { count: 'exact', head: true }),
         
         // Fetch testimonials
         supabase
@@ -153,22 +149,21 @@ const Admin = () => {
         setProducts([]);
       }
 
-      // Handle orders
-      if (ordersResult.status === 'fulfilled' && !ordersResult.value.error) {
-        setOrders(ordersResult.value.data || []);
-        console.log('✅ Orders loaded:', ordersResult.value.data?.length || 0);
-      } else {
-        console.error('❌ Orders error:', ordersResult.status === 'fulfilled' ? ordersResult.value.error : ordersResult.reason);
-        setOrders([]);
+      // Handle products count
+      if (productsCountResult.status === 'fulfilled' && !productsCountResult.value.error) {
+        const count = productsCountResult.value.count || 0;
+        setProductsCount(count);
+        setProductsTotalPages(Math.ceil(count / productsPageSize));
       }
 
-      // Handle customers
-      if (customersResult.status === 'fulfilled' && !customersResult.value.error) {
-        setUsers(customersResult.value.data || []);
-        console.log('✅ Customers loaded:', customersResult.value.data?.length || 0);
-      } else {
-        console.log('⚠️ Customer profiles not available, using empty array');
-        setUsers([]);
+      // Handle orders count
+      if (ordersCountResult.status === 'fulfilled' && !ordersCountResult.value.error) {
+        setOrdersCount(ordersCountResult.value.count || 0);
+      }
+
+      // Handle customers count
+      if (customersCountResult.status === 'fulfilled' && !customersCountResult.value.error) {
+        setCustomersCount(customersCountResult.value.count || 0);
       }
 
       // Handle testimonials
@@ -211,6 +206,12 @@ const Admin = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProductsPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= productsTotalPages) {
+      setProductsPage(newPage);
     }
   };
 
@@ -580,7 +581,7 @@ const Admin = () => {
                 <Package className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{productsCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -592,7 +593,7 @@ const Admin = () => {
                 <ShoppingCart className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{orders.length || 'Loading...'}</p>
+                  <p className="text-2xl font-bold text-gray-900">{ordersCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -604,7 +605,7 @@ const Admin = () => {
                 <Users className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">All Customers</p>
-                  <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{customersCount}</p>
                   <p className="text-xs text-gray-500">Permanent tracking enabled</p>
                 </div>
               </div>
@@ -774,7 +775,7 @@ const Admin = () => {
             {/* Products List */}
             <Card>
               <CardHeader>
-                <CardTitle>Products ({products.length})</CardTitle>
+                <CardTitle>Products ({productsCount})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -816,6 +817,31 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {productsTotalPages > 1 && (
+                  <div className="flex justify-center items-center space-x-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleProductsPageChange(productsPage - 1)}
+                      disabled={productsPage === 1 || loading}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Page {productsPage} of {productsTotalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleProductsPageChange(productsPage + 1)}
+                      disabled={productsPage === productsTotalPages || loading}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

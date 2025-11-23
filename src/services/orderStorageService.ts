@@ -231,6 +231,76 @@ class OrderStorageService {
     }
   }
 
+  // Get paginated orders (for admin)
+  async getOrdersPaginated(page: number, pageSize: number, statusFilter?: string[]): Promise<{ data: StoredOrder[], count: number }> {
+    console.log(`📋 Fetching orders page ${page} (size ${pageSize})`, statusFilter ? `filtering by ${statusFilter.join(',')}` : '');
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    try {
+      // Build query
+      let query = supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: false });
+      
+      if (statusFilter && statusFilter.length > 0) {
+        // If we have multiple statuses, we use 'in'
+        // But if we want "NOT in", we need to handle that.
+        // For now, let's assume the caller passes the statuses they WANT.
+        query = query.in('order_status', statusFilter);
+      }
+
+      // Get total count first (with filters)
+      // We need a separate query for count because range() affects count if we don't use {count: 'exact'} properly with filters?
+      // Actually select('*', { count: 'exact' }) should work with filters.
+      
+      // Let's do it in one go if possible, but sometimes it's safer to separate if we want total count of filtered items.
+      
+      // Apply sorting
+      query = query.order('created_at', { ascending: false });
+      
+      // Apply pagination
+      query = query.range(start, end);
+
+      const { data: ordersData, error: ordersError, count } = await query;
+
+      if (ordersError) throw ordersError;
+
+      if (ordersData && ordersData.length > 0) {
+        // Fetch order items for each order
+        const ordersWithItems = await Promise.all(
+          ordersData.map(async (order) => {
+            const { data: itemsData } = await supabase
+              .from('order_items')
+              .select('*')
+              .eq('order_id', order.order_id);
+
+            return {
+              ...order,
+              items: itemsData || []
+            };
+          })
+        );
+
+        return { data: ordersWithItems, count: count || 0 };
+      }
+      
+      return { data: [], count: count || 0 };
+    } catch (error) {
+      console.error('⚠️ Database fetch failed, falling back to localStorage:', error);
+      
+      // Fallback to localStorage
+      let allOrders = this.getStoredOrders();
+      
+      if (statusFilter && statusFilter.length > 0) {
+        allOrders = allOrders.filter(o => statusFilter.includes(o.order_status));
+      }
+      
+      const paginatedOrders = allOrders.slice(start, end + 1);
+      return { data: paginatedOrders, count: allOrders.length };
+    }
+  }
+
   // Update order status
   async updateOrderStatus(orderId: string, newStatus: string): Promise<boolean> {
     console.log('🔄 Updating order status:', orderId, newStatus);

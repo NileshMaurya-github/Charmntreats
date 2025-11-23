@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LazyImageProps {
@@ -19,27 +19,8 @@ const LazyImage: React.FC<LazyImageProps> = ({
   onError
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '50px' }
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -61,21 +42,21 @@ const LazyImage: React.FC<LazyImageProps> = ({
       {/* Actual image */}
       <img
         ref={imgRef}
-        src={isInView ? (hasError ? placeholder : src) : undefined}
+        src={hasError ? placeholder : src}
         alt={alt}
         className={cn(
-          "w-full h-full object-cover transition-all duration-700",
-          isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105",
+          "w-full h-full object-cover transition-opacity duration-300",
+          isLoaded ? "opacity-100" : "opacity-0",
           className
         )}
         onLoad={handleLoad}
         onError={handleError}
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       
       {/* Loading indicator */}
-      {isInView && !isLoaded && !hasError && (
+      {!isLoaded && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
         </div>

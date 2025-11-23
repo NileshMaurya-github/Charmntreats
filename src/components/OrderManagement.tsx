@@ -42,6 +42,11 @@ const OrderManagement = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeTab, setActiveTab] = useState('new');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
   const { toast } = useToast();
 
   const orderStatuses = [
@@ -55,52 +60,31 @@ const OrderManagement = () => {
     { value: 'returned', label: 'Returned', color: 'bg-red-100 text-red-800' }
   ];
 
-  // Filter orders based on status for different tabs
-  const newOrders = orders.filter(order =>
-    !['delivered', 'cancelled', 'returned'].includes(order.order_status.toLowerCase())
-  );
-
-  const deliveredOrders = orders.filter(order =>
-    order.order_status.toLowerCase() === 'delivered'
-  );
-
-  const cancelledReturnedOrders = orders.filter(order =>
-    ['cancelled', 'returned'].includes(order.order_status.toLowerCase())
-  );
-
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [activeTab, currentPage]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      console.log('🔍 OrderManagement: Fetching orders...');
+      console.log(`🔍 OrderManagement: Fetching orders for tab ${activeTab}, page ${currentPage}...`);
 
-      // Use the order storage service to fetch all orders from last 3 months
-      const allOrders = await orderStorageService.getAllOrders();
-
-      // Filter orders from last 3 months
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-      const recentOrders = allOrders.filter(order => {
-        const orderDate = new Date(order.created_at);
-        return orderDate >= threeMonthsAgo;
-      });
-
-      console.log('📋 OrderManagement: Fetched orders:', recentOrders.length);
-      console.log('📊 OrderManagement: Orders data:', recentOrders);
-      setOrders(recentOrders);
-
-      if (recentOrders.length === 0) {
-        console.log('ℹ️ OrderManagement: No orders found from last 3 months');
-      } else {
-        console.log('✅ OrderManagement: Orders loaded successfully');
-        recentOrders.slice(0, 3).forEach((order, index) => {
-          console.log(`   ${index + 1}. ${order.order_id}: ${order.customer_name} - ₹${order.total_amount}`);
-        });
+      let statusFilter: string[] = [];
+      
+      if (activeTab === 'new') {
+        statusFilter = ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'];
+      } else if (activeTab === 'delivered') {
+        statusFilter = ['delivered'];
+      } else if (activeTab === 'cancelled') {
+        statusFilter = ['cancelled', 'returned'];
       }
+
+      const { data, count } = await orderStorageService.getOrdersPaginated(currentPage, pageSize, statusFilter);
+
+      console.log('📋 OrderManagement: Fetched orders:', data.length);
+      setOrders(data);
+      setTotalCount(count);
+      setTotalPages(Math.ceil(count / pageSize));
 
     } catch (error) {
       console.error('❌ OrderManagement: Error fetching orders:', error);
@@ -111,6 +95,17 @@ const OrderManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page when changing tabs
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
   };
 
@@ -373,105 +368,92 @@ const OrderManagement = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="new" className="space-y-6">
+      <Tabs defaultValue="new" className="space-y-6" onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="new" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            New Orders ({newOrders.length})
+            New Orders
           </TabsTrigger>
           <TabsTrigger value="delivered" className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            Delivered ({deliveredOrders.length})
+            Delivered
           </TabsTrigger>
           <TabsTrigger value="cancelled" className="flex items-center gap-2">
             <XCircle className="h-4 w-4" />
-            Cancelled/Returned ({cancelledReturnedOrders.length})
+            Cancelled/Returned
           </TabsTrigger>
         </TabsList>
 
-        {/* New Orders Tab */}
-        <TabsContent value="new" className="space-y-4">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-slate-800">
-              New Orders ({newOrders.length})
+              {activeTab === 'new' && 'New Orders'}
+              {activeTab === 'delivered' && 'Delivered Orders'}
+              {activeTab === 'cancelled' && 'Cancelled & Returned Orders'}
+              <span className="ml-2 text-sm font-normal text-slate-500">({totalCount})</span>
             </h3>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-              Pending processing
+            <Badge variant="outline" className={
+              activeTab === 'new' ? "bg-blue-50 text-blue-700" :
+              activeTab === 'delivered' ? "bg-green-50 text-green-700" :
+              "bg-red-50 text-red-700"
+            }>
+              {activeTab === 'new' && 'Pending processing'}
+              {activeTab === 'delivered' && 'Successfully completed'}
+              {activeTab === 'cancelled' && 'Cancelled or returned'}
             </Badge>
           </div>
 
-          {newOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No New Orders</h3>
-                <p className="text-slate-500">New orders will appear here when customers place orders.</p>
+                {activeTab === 'new' && <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />}
+                {activeTab === 'delivered' && <CheckCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />}
+                {activeTab === 'cancelled' && <XCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />}
+                <h3 className="text-lg font-semibold text-slate-600 mb-2">No Orders Found</h3>
+                <p className="text-slate-500">
+                  {activeTab === 'new' && 'New orders will appear here when customers place orders.'}
+                  {activeTab === 'delivered' && 'Delivered orders will appear here once orders are marked as delivered.'}
+                  {activeTab === 'cancelled' && 'Cancelled or returned orders will appear here.'}
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {newOrders.map((order) => (
-                <OrderCard key={order.id} order={order} showStatusUpdate={true} />
+              {orders.map((order) => (
+                <OrderCard 
+                  key={order.id} 
+                  order={order} 
+                  showStatusUpdate={activeTab !== 'delivered'} 
+                />
               ))}
             </div>
           )}
-        </TabsContent>
 
-        {/* Delivered Orders Tab */}
-        <TabsContent value="delivered" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-slate-800">
-              Delivered Orders ({deliveredOrders.length})
-            </h3>
-            <Badge variant="outline" className="bg-green-50 text-green-700">
-              Successfully completed
-            </Badge>
-          </div>
-
-          {deliveredOrders.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <CheckCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No Delivered Orders</h3>
-                <p className="text-slate-500">Delivered orders will appear here once orders are marked as delivered.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {deliveredOrders.map((order) => (
-                <OrderCard key={order.id} order={order} showStatusUpdate={false} />
-              ))}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-slate-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+              >
+                Next
+              </Button>
             </div>
           )}
-        </TabsContent>
-
-        {/* Cancelled/Returned Orders Tab */}
-        <TabsContent value="cancelled" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-slate-800">
-              Cancelled & Returned Orders ({cancelledReturnedOrders.length})
-            </h3>
-            <Badge variant="outline" className="bg-red-50 text-red-700">
-              Cancelled or returned
-            </Badge>
-          </div>
-
-          {cancelledReturnedOrders.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <XCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No Cancelled/Returned Orders</h3>
-                <p className="text-slate-500">Cancelled or returned orders will appear here.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {cancelledReturnedOrders.map((order) => (
-                <OrderCard key={order.id} order={order} showStatusUpdate={true} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

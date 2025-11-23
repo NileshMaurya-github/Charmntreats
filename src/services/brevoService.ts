@@ -110,8 +110,13 @@ class BrevoService {
 
   // Fallback: Direct API call (for development/testing only)
   async sendOTPEmailDirect(email: string, otp: string, type: 'signup' | 'reset'): Promise<boolean> {
-    const BREVO_API_KEY = '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';
+    const BREVO_API_KEY = import.meta.env.VITE_BREVO_API_KEY || '';
     
+    if (!BREVO_API_KEY) {
+      console.error('❌ Missing VITE_BREVO_API_KEY in environment variables');
+      return false;
+    }
+
     try {
       console.log('🔐 Sending OTP email via direct API (fallback):', { email, otp, type });
 

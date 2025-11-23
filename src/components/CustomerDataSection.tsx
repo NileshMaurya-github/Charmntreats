@@ -18,21 +18,25 @@ const CustomerDataSection = () => {
     recentSignups: 0
   });
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     loadCustomerData();
-  }, []);
+  }, [currentPage]);
 
-  const loadCustomerData = () => {
+  const loadCustomerData = async () => {
     setLoading(true);
     try {
-      const customers = customerDataService.getStoredCustomerData();
+      const { data, count } = await customerDataService.getCustomersPaginated(currentPage, pageSize);
       const logins = customerDataService.getStoredLoginHistory();
-      const statistics = customerDataService.getCustomerStats();
+      const statistics = await customerDataService.fetchCustomerStats();
 
-      setCustomerData(customers);
+      setCustomerData(data);
       setLoginHistory(logins);
       setStats(statistics);
+      setTotalPages(Math.ceil(count / pageSize));
     } catch (error) {
       console.error('Error loading customer data:', error);
       toast({
@@ -42,6 +46,12 @@ const CustomerDataSection = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
   };
 
@@ -235,6 +245,31 @@ const CustomerDataSection = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-slate-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+              >
+                Next
+              </Button>
             </div>
           )}
         </CardContent>

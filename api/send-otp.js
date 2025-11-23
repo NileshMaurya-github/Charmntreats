@@ -1,7 +1,7 @@
 // Vercel serverless function for sending OTP emails via Brevo API
 // Using direct fetch instead of SDK for better compatibility
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.VITE_BREVO_API_KEY || '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';
+const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.VITE_BREVO_API_KEY;
 
 export default async function handler(req, res) {
   // Enable CORS

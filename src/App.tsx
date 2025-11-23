@@ -55,11 +55,8 @@ const queryClient = new QueryClient({
 
 // Loading component with smooth animation
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
-    <div className="relative">
-      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
-      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-rose-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}></div>
-    </div>
+  <div className="min-h-screen flex items-center justify-center bg-[#fadde1]">
+    <div className="w-16 h-16 border-4 border-white/30 border-t-rose-500 rounded-full animate-spin"></div>
   </div>
 );
 
@@ -93,6 +90,10 @@ const PerformanceWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import PageTransition from "@/components/Layout/PageTransition";
+
+// ...existing code...
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -105,44 +106,46 @@ const App = () => (
               <BrowserRouter>
                 <ScrollToTop />
                 <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                    <Route path="/order-history" element={<OrderHistory />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/profile/address" element={<ProfileAddress />} />
-                    <Route path="/track-order" element={<TrackOrder />} />
-                    <Route path="/address-demo" element={<AddressDemo />} />
-                    <Route path="/test-emails" element={<TestEmails />} />
-                    <Route path="/email-test" element={<EmailTest />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/vlog" element={<Vlog />} />
-                    <Route path="/about" element={<AboutUs />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <Admin />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/blogDetails/DreamCatcher" element={<DreamCatcher />} />
-                    <Route path="/blogDetails/Embroidery" element={<Embroidery />} />
-                    <Route path="/blogDetails/LippanArt" element={<LippanArt />} />
-                    <Route path="/blogDetails/ResinArt" element={<ResinArt />} />
-                    <Route path="/blogDetails/CandleMaking" element={<CandleMaking />} />
-                    <Route path="/blogDetails/Calligraphy" element={<Calligraphy />} />
-                    <Route path="/blogDetails/HairAccessories" element={<HairAccessories />} />
-                    <Route path="/blogDetails/OthersDelivery" element={<OthersDelivery />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <PageTransition>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                      <Route path="/order-history" element={<OrderHistory />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/profile/address" element={<ProfileAddress />} />
+                      <Route path="/track-order" element={<TrackOrder />} />
+                      <Route path="/address-demo" element={<AddressDemo />} />
+                      <Route path="/test-emails" element={<TestEmails />} />
+                      <Route path="/email-test" element={<EmailTest />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/vlog" element={<Vlog />} />
+                      <Route path="/about" element={<AboutUs />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <Admin />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/blogDetails/DreamCatcher" element={<DreamCatcher />} />
+                      <Route path="/blogDetails/Embroidery" element={<Embroidery />} />
+                      <Route path="/blogDetails/LippanArt" element={<LippanArt />} />
+                      <Route path="/blogDetails/ResinArt" element={<ResinArt />} />
+                      <Route path="/blogDetails/CandleMaking" element={<CandleMaking />} />
+                      <Route path="/blogDetails/Calligraphy" element={<Calligraphy />} />
+                      <Route path="/blogDetails/HairAccessories" element={<HairAccessories />} />
+                      <Route path="/blogDetails/OthersDelivery" element={<OthersDelivery />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </PageTransition>
                 </Suspense>
                 <AuthDebug />
               </BrowserRouter>

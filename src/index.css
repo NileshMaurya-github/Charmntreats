@@ -4,21 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== ULTRA-SMOOTH 120FPS OPTIMIZATIONS (automationcap.com style) ===== */
+/* ===== OPTIMIZED FOR BUTTER-SMOOTH SCROLLING ===== */
 @layer base {
-  /* Hardware acceleration for all elements */
+  /* Minimal font smoothing */
   * {
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Ultra-smooth scrolling */
+  /* Smooth scrolling */
   html {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
@@ -46,65 +40,18 @@
     pointer-events: none;
   }
 
-  /* GPU acceleration for smooth rendering */
+  /* Minimal GPU acceleration */
   body,
   #root {
-    will-change: auto;
-    transform: translate3d(0, 0, 0);
-    -webkit-font-smoothing: antialiased;
+    transform: translateZ(0);
   }
 
-  /* Optimize image rendering */
+  /* Simple image rendering */
   img,
   picture,
   video,
   canvas {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    transform: translate3d(0, 0, 0);
-    will-change: auto;
-  }
-
-  /* Smooth transitions with GPU acceleration */
-  button,
-  a,
-  [role="button"],
-  .hover-scale {
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  /* Optimize animations - use only transform and opacity */
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translate3d(0, 30px, 0);
-    }
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translate3d(0, 0, 0);
-    }
-    50% {
-      transform: translate3d(0, -15px, 0);
-    }
-  }
-
-  @keyframes twinkle {
-    0%, 100% {
-      opacity: 0.2;
-      transform: scale3d(0.8, 0.8, 1);
-    }
-    50% {
-      opacity: 0.8;
-      transform: scale3d(1.1, 1.1, 1);
-    }
+    image-rendering: auto;
   }
 
   @keyframes pulse {
@@ -270,11 +217,10 @@
 @layer base {
   * {
     @apply border-border;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     scroll-padding-top: 5rem;
   }
 
@@ -292,83 +238,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Add beautiful floral texture overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: var(--floral-pattern);
-    opacity: 0.4;
-    pointer-events: none;
-    z-index: -2;
-    animation: floralFloat 20s ease-in-out infinite;
-  }
-
-  /* Add floating floral elements */
-  body::after {
-    content: '';
-    position: fixed;
-    top: -10%;
-    left: -10%;
-    width: 120%;
-    height: 120%;
-    background-image: var(--floral-texture);
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: -1;
-    animation: floralDrift 30s linear infinite;
-  }
-
-  @keyframes floralFloat {
-
-    0%,
-    100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-
-    25% {
-      transform: translateY(-10px) rotate(1deg);
-    }
-
-    50% {
-      transform: translateY(-5px) rotate(-1deg);
-    }
-
-    75% {
-      transform: translateY(-15px) rotate(0.5deg);
-    }
-  }
-
-  @keyframes floralDrift {
-    0% {
-      transform: translate(-10%, -10%) rotate(0deg);
-    }
-
-    25% {
-      transform: translate(-5%, -15%) rotate(90deg);
-    }
-
-    50% {
-      transform: translate(-15%, -5%) rotate(180deg);
-    }
-
-    75% {
-      transform: translate(-8%, -12%) rotate(270deg);
-    }
-
-    100% {
-      transform: translate(-10%, -10%) rotate(360deg);
-    }
-  }
-
   /* Professional Animation Keyframes */
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(30px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -379,7 +253,7 @@
   @keyframes fadeInDown {
     from {
       opacity: 0;
-      transform: translateY(-30px);
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
@@ -390,7 +264,7 @@
   @keyframes slideInLeft {
     from {
       opacity: 0;
-      transform: translateX(-50px);
+      transform: translateX(-10px);
     }
     to {
       opacity: 1;
@@ -401,7 +275,7 @@
   @keyframes slideInRight {
     from {
       opacity: 0;
-      transform: translateX(50px);
+      transform: translateX(10px);
     }
     to {
       opacity: 1;
@@ -412,7 +286,7 @@
   @keyframes scaleIn {
     from {
       opacity: 0;
-      transform: scale(0.9);
+      transform: scale(0.95);
     }
     to {
       opacity: 1;
@@ -420,206 +294,62 @@
     }
   }
 
-  @keyframes shimmer {
-    0% {
-      background-position: -200px 0;
-    }
-    100% {
-      background-position: calc(200px + 100%) 0;
-    }
+  /* Removed heavy animations: shimmer, pulse, bounce, float, glow, zoom-in, slide-left, slide-right, bounce-subtle */
+
+  /* Minimal transitions for interactive elements */
+  button:hover,
+  a:hover {
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  @keyframes bounce {
-    0%, 20%, 53%, 80%, 100% {
-      transform: translateY(0);
-    }
-    40%, 43% {
-      transform: translateY(-30px);
-    }
-    70% {
-      transform: translateY(-15px);
-    }
-    90% {
-      transform: translateY(-4px);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  @keyframes glow {
-    from {
-      box-shadow: 0 0 20px rgba(255, 105, 180, 0.2);
-    }
-    to {
-      box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 0 40px rgba(248, 187, 217, 0.3);
-    }
-  }
-
-  @keyframes zoom-in {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes slide-left {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes slide-right {
-    from {
-      opacity: 0;
-      transform: translateX(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-3px);
-    }
-  }
-
-  /* Smooth transitions for all interactive elements */
-  button,
-  a,
-  input,
-  textarea,
-  select {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Professional Page Transitions */
+  /* Page Transitions - Minimal */
   .page-enter {
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: 1;
   }
 
   .page-enter-active {
     opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
   }
 
   .page-exit {
     opacity: 1;
-    transform: translateY(0);
   }
 
   .page-exit-active {
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+    opacity: 1;
   }
 
-  /* Professional Animation Utility Classes */
-  .animate-fade-in-up {
-    animation: fadeInUp 0.3s ease-out forwards;
-  }
-
-  .animate-fade-in-down {
-    animation: fadeInDown 0.3s ease-out forwards;
-  }
-
-  .animate-slide-in-left {
-    animation: slideInLeft 0.35s ease-out forwards;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.35s ease-out forwards;
-  }
-
+  /* Professional Animation Utility Classes - DISABLED FOR PERFORMANCE */
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
   .animate-scale-in {
-    animation: scaleIn 0.25s ease-out forwards;
+    animation: none !important;
   }
 
-  .animate-float {
-    animation: float 2s ease-in-out infinite;
-  }
-
-  .animate-glow {
-    animation: glow 1.5s ease-in-out infinite alternate;
-  }
-
-  .animate-shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: shimmer 1s infinite;
-  }
-
-  .animate-zoom-in {
-    animation: zoom-in 0.4s ease-out forwards;
-  }
-
-  .animate-slide-left {
-    animation: slide-left 0.6s ease-out forwards;
-  }
-
-  .animate-slide-right {
-    animation: slide-right 0.6s ease-out forwards;
-  }
-
+  /* Removed heavy animation classes */
+  .animate-float,
+  .animate-glow,
+  .animate-shimmer,
+  .animate-zoom-in,
+  .animate-slide-left,
+  .animate-slide-right,
   .animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
+    animation: none !important;
   }
 
-  /* Hover Effects */
-  .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
+  /* Hover Effects - Minimal */
   .hover-lift:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  }
-
-  .hover-scale {
-    transition: transform 0.3s ease;
+    transform: translateY(-2px);
   }
 
   .hover-scale:hover {
-    transform: scale(1.05);
-  }
-
-  .hover-glow {
-    transition: box-shadow 0.3s ease;
+    transform: scale(1.02);
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
   }
 
   /* Stagger Animation Delays */
@@ -704,19 +434,12 @@
     background: var(--floral-gradient-subtle);
     opacity: 0.08;
     pointer-events: none;
-    transition: opacity 0.3s ease;
   }
 
-  /* Apple-inspired hover effects with floral feel */
-  .hover-lift {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform-origin: center;
-  }
-
+  /* Hover effects - Minimal */
   .hover-lift:hover {
     transform: translateY(-2px) scale(1.01);
     box-shadow: var(--floral-shadow-hover);
-    filter: brightness(1.03) saturate(1.1);
   }
 
   .hover-lift:hover::before {
@@ -733,43 +456,6 @@
     overflow: hidden;
   }
 
-  .bg-floral-gradient::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--petal-stroke);
-    opacity: 0.12;
-    pointer-events: none;
-    animation: petalSway 8s ease-in-out infinite;
-  }
-
-  @keyframes petalSway {
-
-    0%,
-    100% {
-      transform: translateX(0) rotate(0deg);
-      opacity: 0.12;
-    }
-
-    25% {
-      transform: translateX(10px) rotate(1deg);
-      opacity: 0.08;
-    }
-
-    50% {
-      transform: translateX(-5px) rotate(-0.5deg);
-      opacity: 0.15;
-    }
-
-    75% {
-      transform: translateX(8px) rotate(0.8deg);
-      opacity: 0.10;
-    }
-  }
-
   .bg-rose-gradient {
     background: var(--floral-gradient-main);
   }
@@ -778,26 +464,18 @@
     background: var(--floral-gradient-subtle);
   }
 
-  /* Light pink gradient button styles for Add to Cart - Optimized */
+  /* Light pink gradient button styles - Simplified */
   .btn-dark-pink {
     background: linear-gradient(135deg, #ffb6c1 0%, #ffc0cb 50%, #ffe4e1 100%);
     @apply font-semibold px-4 py-2 rounded-lg relative overflow-hidden;
-    @apply transform transition-all duration-300;
     color: #000000 !important;
     box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
     border: 1px solid #ffb6c1;
-    transition: all 0.3s ease;
-    will-change: transform, box-shadow;
   }
 
-  .btn-dark-pink::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  .btn-dark-pink:hover {
+    box-shadow: 0 6px 16px rgba(255, 182, 193, 0.6);
+  }
     transition: left 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
@@ -1099,7 +777,6 @@
     transform: translateY(0) scale(0.98);
     transition: all 0.1s ease;
   }
-}
 
 /* Ultra Performance Optimizations - No Blur Effects */
 .performance-optimized {
@@ -1862,37 +1539,31 @@ atured Products Animations */
   }
 }
 
-/* Ultra
- Premium Category Transitions */
+/* Ultra Premium Category Transitions - No Blur */
 @keyframes premiumFadeTransition {
   0% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
-    filter: blur(0px) brightness(1) saturate(1);
   }
 
   25% {
     opacity: 0.7;
     transform: scale(1.01) rotate(0.2deg);
-    filter: blur(0.5px) brightness(1.05) saturate(1.1);
   }
 
   50% {
     opacity: 0;
     transform: scale(1.02) rotate(0deg);
-    filter: blur(1px) brightness(1.1) saturate(1.2);
   }
 
   75% {
     opacity: 0.3;
     transform: scale(1.01) rotate(-0.1deg);
-    filter: blur(0.5px) brightness(1.05) saturate(1.1);
   }
 
   100% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
-    filter: blur(0px) brightness(1) saturate(1);
   }
 }
 
@@ -1901,7 +1572,6 @@ atured Products Animations */
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(254, 242, 244, 0.9) 100%);
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 105, 180, 0.1);
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

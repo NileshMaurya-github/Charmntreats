@@ -133,6 +133,81 @@ class CustomerDataService {
     }
   }
 
+  // Get paginated customers from Supabase
+  async getCustomersPaginated(page: number, pageSize: number): Promise<{ data: any[], count: number }> {
+    console.log(`📋 Fetching customers page ${page} (size ${pageSize})`);
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    try {
+      // Get total count
+      const { count, error: countError } = await supabase
+        .from('profiles' as any)
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) throw countError;
+
+      // Get paginated data
+      const { data, error } = await supabase
+        .from('profiles' as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(start, end);
+
+      if (error) throw error;
+
+      return { data: data || [], count: count || 0 };
+    } catch (error) {
+      console.error('⚠️ Database fetch failed, falling back to localStorage:', error);
+      
+      // Fallback to localStorage
+      const allCustomers = this.getStoredCustomerData();
+      const paginatedCustomers = allCustomers.slice(start, end + 1);
+      return { data: paginatedCustomers, count: allCustomers.length };
+    }
+  }
+
+  // Fetch customer stats from Supabase
+  async fetchCustomerStats(): Promise<{
+    totalCustomers: number;
+    totalLogins: number;
+    successfulLogins: number;
+    failedLogins: number;
+    recentSignups: number;
+  }> {
+    try {
+      // Get total customers count
+      const { count: totalCustomers } = await supabase
+        .from('profiles' as any)
+        .select('*', { count: 'exact', head: true });
+
+      // For logins, we might not have a table yet, so we'll use localStorage for now
+      // or if you have a login_history table, query that.
+      // Assuming we rely on localStorage for login history for now as per existing code
+      const loginHistory = this.getStoredLoginHistory();
+      
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      // Get recent signups count
+      const { count: recentSignups } = await supabase
+        .from('profiles' as any)
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', sevenDaysAgo.toISOString());
+
+      return {
+        totalCustomers: totalCustomers || 0,
+        totalLogins: loginHistory.length,
+        successfulLogins: loginHistory.filter(login => login.success).length,
+        failedLogins: loginHistory.filter(login => !login.success).length,
+        recentSignups: recentSignups || 0
+      };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return this.getCustomerStats(); // Fallback to local stats
+    }
+  }
+
   // Get customer statistics
   getCustomerStats(): {
     totalCustomers: number;
