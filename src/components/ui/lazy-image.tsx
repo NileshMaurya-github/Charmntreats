@@ -38,7 +38,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-pink-100/50 via-rose-100/80 to-pink-100/50 bg-[length:200%_100%]" />
       )}
-      
+
       {/* Actual image */}
       <img
         ref={imgRef}
@@ -51,10 +51,10 @@ const LazyImage: React.FC<LazyImageProps> = ({
         )}
         onLoad={handleLoad}
         onError={handleError}
-        loading="eager"
+        loading="lazy"
         decoding="async"
       />
-      
+
       {/* Loading indicator */}
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center">

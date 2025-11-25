@@ -6,10 +6,10 @@ interface StaticCategoryImageProps {
   className?: string;
 }
 
-const StaticCategoryImage: React.FC<StaticCategoryImageProps> = ({ 
-  images, 
-  categoryName, 
-  className = "" 
+const StaticCategoryImage: React.FC<StaticCategoryImageProps> = ({
+  images,
+  categoryName,
+  className = ""
 }) => {
   // Category-specific fallback images for better representation
   const categoryFallbacks: Record<string, string> = {
@@ -23,12 +23,13 @@ const StaticCategoryImage: React.FC<StaticCategoryImageProps> = ({
     'Hair Accessories': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
     'Others': 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'
   };
-  
+
   // Use actual product image or category-specific fallback
   const displayImage = images.length > 0 ? images[0] : (categoryFallbacks[categoryName] || categoryFallbacks['Others']);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const target = e.target as HTMLImageElement;
+    target.onerror = null; // Prevent infinite loop
     target.src = categoryFallbacks[categoryName] || categoryFallbacks['Others'];
   };
 
@@ -44,7 +45,7 @@ const StaticCategoryImage: React.FC<StaticCategoryImageProps> = ({
         decoding="sync"
         style={{ filter: 'none', backdropFilter: 'none' }}
       />
-      
+
       {/* Subtle gradient overlay for better text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
     </div>

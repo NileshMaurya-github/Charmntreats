@@ -23,13 +23,13 @@ const EmailTest = () => {
   const testOTPEmail = async () => {
     setLoading(true);
     addResult('🧪 Starting OTP email test...');
-    
+
     try {
       const otp = fallbackEmailService.generateOTP();
       addResult(`📧 Generated OTP: ${otp}`);
-      
+
       const result = await fallbackEmailService.sendOTPEmail(testEmail, otp, 'signup');
-      
+
       if (result) {
         addResult('✅ OTP email sent successfully!');
         toast({
@@ -59,13 +59,13 @@ const EmailTest = () => {
   const testResetEmail = async () => {
     setLoading(true);
     addResult('🧪 Starting password reset email test...');
-    
+
     try {
       const otp = fallbackEmailService.generateOTP();
       addResult(`📧 Generated reset code: ${otp}`);
-      
+
       const result = await fallbackEmailService.sendOTPEmail(testEmail, otp, 'reset');
-      
+
       if (result) {
         addResult('✅ Password reset email sent successfully!');
         toast({
@@ -95,7 +95,7 @@ const EmailTest = () => {
   const testGenericEmail = async () => {
     setLoading(true);
     addResult('🧪 Starting generic email test...');
-    
+
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
@@ -155,16 +155,16 @@ const EmailTest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <TestTube className="h-8 w-8 text-black" />
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+            <TestTube className="h-8 w-8 text-slate-900" />
             Email System Test - Charmntreats
           </h1>
-          <p className="text-gray-600">Test the email functionality to ensure OTP and order confirmation emails are working</p>
+          <p className="text-slate-700">Test the email functionality to ensure OTP and order confirmation emails are working</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -240,9 +240,9 @@ const EmailTest = () => {
               <CardTitle>Test Results</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+              <div className="bg-slate-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
                 {testResults.length === 0 ? (
-                  <div className="text-gray-500">No tests run yet. Click a test button to start.</div>
+                  <div className="text-slate-600">No tests run yet. Click a test button to start.</div>
                 ) : (
                   testResults.map((result, index) => (
                     <div key={index} className="mb-1">
@@ -264,26 +264,26 @@ const EmailTest = () => {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-lg mb-2">How to use this test page:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                <ol className="list-decimal list-inside space-y-2 text-slate-800">
                   <li>Enter your email address in the test field</li>
                   <li>Click any of the test buttons to send different types of emails</li>
                   <li>Check your email inbox for the test messages</li>
                   <li>Monitor the test results panel for detailed logs</li>
                 </ol>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold text-lg mb-2">What each test does:</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                <ul className="list-disc list-inside space-y-2 text-slate-800">
                   <li><strong>OTP Email:</strong> Tests the signup verification email with a 6-digit code</li>
                   <li><strong>Password Reset:</strong> Tests the forgot password email with a reset code</li>
                   <li><strong>Generic Email:</strong> Tests the basic email API functionality</li>
                 </ul>
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-black mb-2">Troubleshooting:</h3>
-                <ul className="list-disc list-inside space-y-1 text-black text-sm">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">Troubleshooting:</h3>
+                <ul className="list-disc list-inside space-y-1 text-slate-900 text-sm">
                   <li>If emails fail, check the test results for error details</li>
                   <li>Emails may take 1-2 minutes to arrive</li>
                   <li>Check your spam/junk folder if emails don't appear</li>

@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import addressService, { Address } from '@/services/addressService';
-import { permanentStorageService } from '@/services/permanentStorageService';
 import { addressStorageMonitor } from '@/utils/addressStorageMonitor';
 
 const AddressDemo = () => {
@@ -38,17 +37,17 @@ const AddressDemo = () => {
     } else {
       setLoading(false);
     }
-    
+
     // Check if monitoring is already enabled
     setMonitoringEnabled(addressStorageMonitor.isMonitoringEnabled());
-    
+
     // Check storage health
     const health = addressStorageMonitor.checkStorageHealth();
     setStorageHealth(health);
-    
+
     // Update monitor logs
     updateMonitorLogs();
-    
+
     // Set up interval to refresh monitor logs
     const interval = setInterval(updateMonitorLogs, 5000);
     return () => clearInterval(interval);
@@ -66,7 +65,7 @@ const AddressDemo = () => {
 
   const loadAddresses = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const userAddresses = await addressService.getUserAddresses(user.id);
@@ -92,15 +91,15 @@ const AddressDemo = () => {
       });
       return;
     }
-    
+
     try {
       const newAddress: Omit<Address, 'id' | 'created_at' | 'updated_at'> = {
         ...demoAddress,
         user_id: user.id
       };
-      
+
       const result = await addressService.addAddress(newAddress);
-      
+
       if (result) {
         toast({
           title: "Success",
@@ -120,23 +119,23 @@ const AddressDemo = () => {
 
   const handleClearAddresses = async () => {
     if (!user) return;
-    
+
     try {
       // Get all addresses
       const userAddresses = await addressService.getUserAddresses(user.id);
-      
+
       // Delete each address
       for (const address of userAddresses) {
         if (address.id) {
           await addressService.deleteAddress(address.id);
         }
       }
-      
+
       toast({
         title: "Success",
         description: "All addresses cleared successfully",
       });
-      
+
       loadAddresses();
     } catch (error) {
       console.error('Error clearing addresses:', error);
@@ -158,7 +157,7 @@ const AddressDemo = () => {
     try {
       const rawData = localStorage.getItem('charm_n_treats_addresses');
       console.log('Raw address storage data:', rawData ? JSON.parse(rawData) : null);
-      
+
       toast({
         title: "Storage Data",
         description: "Raw storage data logged to console",
@@ -172,7 +171,7 @@ const AddressDemo = () => {
       });
     }
   };
-  
+
   const handleToggleMonitoring = () => {
     if (monitoringEnabled) {
       addressStorageMonitor.disable();
@@ -191,7 +190,7 @@ const AddressDemo = () => {
       });
     }
   };
-  
+
   const handleClearMonitorLogs = () => {
     addressStorageMonitor.clearLogs();
     setMonitorLogs([]);
@@ -200,7 +199,7 @@ const AddressDemo = () => {
       description: "Monitor logs have been cleared",
     });
   };
-  
+
   const handleCheckStorageHealth = () => {
     const health = addressStorageMonitor.checkStorageHealth();
     setStorageHealth(health);
@@ -209,7 +208,7 @@ const AddressDemo = () => {
       description: health.message,
     });
   };
-  
+
   const handleRepairStorage = () => {
     const repaired = addressStorageMonitor.repairStorage();
     if (repaired) {
@@ -227,69 +226,67 @@ const AddressDemo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-floral-gradient">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <Header />
-      
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mb-8">Address Storage Demo</h1>
+
+      <div className="container mx-auto px-4 py-8 pt-24">
+        <h1 className="text-3xl font-bold text-center mb-8 text-slate-900">Address Storage Demo</h1>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 text-center">
           <p className="text-sm text-blue-700 mb-2">For developers: Run the verification script to test the complete address system</p>
           <code className="bg-blue-100 px-3 py-1 rounded text-blue-800 text-xs">node scripts/verifyCompleteAddressSystem.cjs</code>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card>
+          <Card className="bg-white border border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Storage Status</CardTitle>
+              <CardTitle className="text-slate-900">Storage Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span>Local Storage:</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    storageStatus === 'available' 
-                      ? 'bg-green-100 text-green-800' 
-                      : storageStatus === 'unavailable'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {storageStatus === 'available' 
-                      ? 'Available' 
+                  <span className="text-slate-800">Local Storage:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${storageStatus === 'available'
+                    ? 'bg-green-100 text-green-800'
+                    : storageStatus === 'unavailable'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                    {storageStatus === 'available'
+                      ? 'Available'
                       : storageStatus === 'unavailable'
                         ? 'Unavailable'
                         : 'Checking...'}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
-                  <span>User Logged In:</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    user ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className="text-slate-800">User Logged In:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${user ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
                     {user ? 'Yes' : 'No'}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
-                  <span>Addresses Loaded:</span>
+                  <span className="text-slate-800">Addresses Loaded:</span>
                   <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                     {loading ? 'Loading...' : `${addresses.length} addresses`}
                   </span>
                 </div>
               </div>
-              
+
               <div className="mt-6 space-y-4">
-                <Button 
+                <Button
                   onClick={handleViewRawStorage}
-                  className="w-full"
+                  className="w-full border-slate-200 text-slate-900 hover:bg-slate-50"
                   variant="outline"
                 >
                   View Raw Storage Data (Console)
                 </Button>
-                
-                <Button 
+
+                <Button
                   onClick={loadAddresses}
-                  className="w-full"
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800"
                   disabled={!user || loading}
                 >
                   Refresh Addresses
@@ -297,92 +294,98 @@ const AddressDemo = () => {
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
+
+          <Card className="bg-white border border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Add Demo Address</CardTitle>
+              <CardTitle className="text-slate-900">Add Demo Address</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-slate-900">Name</Label>
                   <Input
                     id="name"
                     value={demoAddress.name}
-                    onChange={(e) => setDemoAddress({...demoAddress, name: e.target.value})}
+                    onChange={(e) => setDemoAddress({ ...demoAddress, name: e.target.value })}
+                    className="bg-slate-50 border-slate-200"
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address" className="text-slate-900">Address</Label>
                   <Input
                     id="address"
                     value={demoAddress.address}
-                    onChange={(e) => setDemoAddress({...demoAddress, address: e.target.value})}
+                    onChange={(e) => setDemoAddress({ ...demoAddress, address: e.target.value })}
+                    className="bg-slate-50 border-slate-200"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city" className="text-slate-900">City</Label>
                     <Input
                       id="city"
                       value={demoAddress.city}
-                      onChange={(e) => setDemoAddress({...demoAddress, city: e.target.value})}
+                      onChange={(e) => setDemoAddress({ ...demoAddress, city: e.target.value })}
+                      className="bg-slate-50 border-slate-200"
                     />
                   </div>
-                  
+
                   <div>
-                    <Label htmlFor="state">State</Label>
+                    <Label htmlFor="state" className="text-slate-900">State</Label>
                     <Input
                       id="state"
                       value={demoAddress.state}
-                      onChange={(e) => setDemoAddress({...demoAddress, state: e.target.value})}
+                      onChange={(e) => setDemoAddress({ ...demoAddress, state: e.target.value })}
+                      className="bg-slate-50 border-slate-200"
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="pincode">Pincode</Label>
+                    <Label htmlFor="pincode" className="text-slate-900">Pincode</Label>
                     <Input
                       id="pincode"
                       value={demoAddress.pincode}
-                      onChange={(e) => setDemoAddress({...demoAddress, pincode: e.target.value})}
+                      onChange={(e) => setDemoAddress({ ...demoAddress, pincode: e.target.value })}
+                      className="bg-slate-50 border-slate-200"
                     />
                   </div>
-                  
+
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="text-slate-900">Phone</Label>
                     <Input
                       id="phone"
                       value={demoAddress.phone}
-                      onChange={(e) => setDemoAddress({...demoAddress, phone: e.target.value})}
+                      onChange={(e) => setDemoAddress({ ...demoAddress, phone: e.target.value })}
+                      className="bg-slate-50 border-slate-200"
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id="is_default"
                     checked={demoAddress.is_default}
-                    onChange={(e) => setDemoAddress({...demoAddress, is_default: e.target.checked})}
-                    className="rounded"
+                    onChange={(e) => setDemoAddress({ ...demoAddress, is_default: e.target.checked })}
+                    className="rounded border-slate-300"
                   />
-                  <Label htmlFor="is_default">Set as default</Label>
+                  <Label htmlFor="is_default" className="text-slate-900">Set as default</Label>
                 </div>
-                
+
                 <div className="pt-4 space-y-2">
-                  <Button 
+                  <Button
                     onClick={handleAddDemoAddress}
-                    className="w-full bg-pink-600 hover:bg-pink-700"
+                    className="w-full bg-pink-600 hover:bg-pink-700 text-white"
                     disabled={!user}
                   >
                     Add Demo Address
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={handleClearAddresses}
                     className="w-full"
                     variant="destructive"
@@ -395,157 +398,154 @@ const AddressDemo = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card>
+          <Card className="bg-white border border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Your Addresses</CardTitle>
+              <CardTitle className="text-slate-900">Your Addresses</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
-                  <p className="mt-4 text-slate-600">Loading addresses...</p>
+                  <p className="mt-4 text-slate-800">Loading addresses...</p>
                 </div>
               ) : addresses.length > 0 ? (
                 <div className="space-y-4">
                   {addresses.map((address) => (
-                    <div 
-                      key={address.id} 
-                      className={`p-4 border rounded-lg ${address.is_default ? 'border-pink-500 bg-pink-50' : 'border-gray-200'}`}
+                    <div
+                      key={address.id}
+                      className={`p-4 border rounded-lg ${address.is_default ? 'border-pink-500 bg-pink-50' : 'border-slate-200'}`}
                     >
                       <div className="flex justify-between">
-                        <div className="font-medium">{address.name}</div>
+                        <div className="font-medium text-slate-900">{address.name}</div>
                         <div className="text-sm">
                           {address.is_default && (
-                            <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded-full text-xs">
+                            <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded-full text-xs border border-pink-200">
                               Default
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="text-sm text-slate-800 mt-1">
                         <div>{address.address}</div>
                         <div>{address.city}, {address.state} - {address.pincode}</div>
                         <div>Phone: {address.phone}</div>
                       </div>
-                      <div className="text-xs text-gray-400 mt-2">
+                      <div className="text-xs text-slate-600 mt-2">
                         ID: {address.id}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-600">
+                <div className="text-center py-8 text-slate-700">
                   {user ? 'No addresses found. Add a demo address to get started.' : 'Please login to view your addresses.'}
                 </div>
               )}
             </CardContent>
           </Card>
-          
-          <Card>
+
+          <Card className="bg-white border border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Storage Monitor</CardTitle>
+              <CardTitle className="text-slate-900">Storage Monitor</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span>Monitoring Status:</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    monitoringEnabled 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span className="text-slate-800">Monitoring Status:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${monitoringEnabled
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-slate-100 text-slate-800'
+                    }`}>
                     {monitoringEnabled ? 'Enabled' : 'Disabled'}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
-                  <span>Storage Health:</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    storageHealth?.status === 'healthy' 
-                      ? 'bg-green-100 text-green-800' 
-                      : storageHealth?.status === 'empty'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : storageHealth?.status === 'corrupted'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span className="text-slate-800">Storage Health:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${storageHealth?.status === 'healthy'
+                    ? 'bg-green-100 text-green-800'
+                    : storageHealth?.status === 'empty'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : storageHealth?.status === 'corrupted'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-slate-100 text-slate-800'
+                    }`}>
                     {storageHealth?.status || 'Unknown'}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
+                  <Button
                     onClick={handleToggleMonitoring}
                     variant={monitoringEnabled ? "destructive" : "default"}
-                    className="w-full"
+                    className={`w-full ${!monitoringEnabled ? 'bg-slate-900 text-white hover:bg-slate-800' : ''}`}
                   >
                     {monitoringEnabled ? 'Disable Monitoring' : 'Enable Monitoring'}
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={handleCheckStorageHealth}
                     variant="outline"
-                    className="w-full"
+                    className="w-full border-slate-200 text-slate-900 hover:bg-slate-50"
                   >
                     Check Health
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={handleClearMonitorLogs}
                     variant="outline"
-                    className="w-full"
+                    className="w-full border-slate-200 text-slate-900 hover:bg-slate-50"
                     disabled={!monitoringEnabled || monitorLogs.length === 0}
                   >
                     Clear Logs
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={handleRepairStorage}
                     variant="outline"
-                    className="w-full"
+                    className="w-full border-slate-200 text-slate-900 hover:bg-slate-50"
                   >
                     Repair Storage
                   </Button>
                 </div>
-                
+
                 {monitoringEnabled && (
                   <div className="mt-4">
-                    <h3 className="text-sm font-medium mb-2">Monitor Logs</h3>
-                    <div className="bg-gray-50 p-3 rounded-lg max-h-60 overflow-y-auto text-xs">
+                    <h3 className="text-sm font-medium mb-2 text-slate-900">Monitor Logs</h3>
+                    <div className="bg-slate-50 p-3 rounded-lg max-h-60 overflow-y-auto text-xs border border-slate-200">
                       {monitorLogs.length > 0 ? (
                         <div className="space-y-2">
                           {monitorLogs.slice().reverse().map((log, index) => (
-                            <div 
-                              key={index} 
-                              className={`p-2 rounded ${
-                                log.status === 'success' 
-                                  ? 'bg-green-50 border-l-2 border-green-500' 
-                                  : 'bg-red-50 border-l-2 border-red-500'
-                              }`}
+                            <div
+                              key={index}
+                              className={`p-2 rounded ${log.status === 'success'
+                                ? 'bg-green-50 border-l-2 border-green-500'
+                                : 'bg-red-50 border-l-2 border-red-500'
+                                }`}
                             >
                               <div className="flex justify-between">
-                                <span className="font-medium">{log.operation}</span>
-                                <span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                <span className="font-medium text-slate-900">{log.operation}</span>
+                                <span className="text-slate-700">{new Date(log.timestamp).toLocaleTimeString()}</span>
                               </div>
-                              <div className="mt-1">{log.details}</div>
+                              <div className="mt-1 text-slate-800">{log.details}</div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-4 text-gray-500">
+                        <div className="text-center py-4 text-slate-700">
                           No logs available
                         </div>
                       )}
                     </div>
                   </div>
                 )}
-                
+
                 {storageHealth && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <h3 className="text-sm font-medium mb-2">Storage Details</h3>
-                    <div className="text-xs space-y-1">
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <h3 className="text-sm font-medium mb-2 text-blue-900">Storage Details</h3>
+                    <div className="text-xs space-y-1 text-blue-800">
                       <div><span className="font-medium">Status:</span> {storageHealth.status}</div>
                       <div><span className="font-medium">Message:</span> {storageHealth.message}</div>
                       {storageHealth.count !== undefined && (
@@ -559,7 +559,7 @@ const AddressDemo = () => {
           </Card>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

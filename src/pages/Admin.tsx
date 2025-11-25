@@ -77,7 +77,7 @@ const Admin = () => {
 
   const categories = [
     'Dream Catcher',
-    'Embroidery', 
+    'Embroidery',
     'Lippan Arts',
     'Resin Art Work',
     'Illustration',
@@ -94,7 +94,7 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     console.log('🚀 Starting admin data fetch...');
-    
+
     try {
       const productsStart = (productsPage - 1) * productsPageSize;
       const productsEnd = productsStart + productsPageSize - 1;
@@ -114,22 +114,22 @@ const Admin = () => {
           .select('*')
           .order('created_at', { ascending: false })
           .range(productsStart, productsEnd),
-        
+
         // Fetch products count
         supabase.from('products').select('*', { count: 'exact', head: true }),
 
         // Fetch orders count
         supabase.from('orders').select('*', { count: 'exact', head: true }),
-        
+
         // Fetch customers count
         supabase.from('profiles' as any).select('*', { count: 'exact', head: true }),
-        
+
         // Fetch testimonials
         supabase
           .from('testimonials')
           .select('*')
           .order('created_at', { ascending: false }),
-        
+
         // Fetch homepage content
         supabase
           .from('homepage_content')
@@ -218,10 +218,10 @@ const Admin = () => {
   const handleAddProduct = async () => {
     // Prevent multiple submissions
     if (loading) return;
-    
+
     try {
       setLoading(true);
-      
+
       const productData = {
         name: newProduct.name,
         description: newProduct.description,
@@ -442,7 +442,7 @@ const Admin = () => {
         details: error.details,
         hint: error.hint
       });
-      
+
       toast({
         title: "Error",
         description: `Failed to update product: ${error.message}`,
@@ -554,23 +554,23 @@ const Admin = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+          <p className="mt-4 text-slate-700">Loading admin dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard - Charmntreats</h1>
-          <p className="text-gray-600">Manage your store products, orders, customers, testimonials, and homepage content</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Dashboard - Charmntreats</h1>
+          <p className="text-slate-700">Manage your store products, orders, customers, testimonials, and homepage content</p>
         </div>
 
         {/* Stats Cards */}
@@ -580,8 +580,8 @@ const Admin = () => {
               <div className="flex items-center">
                 <Package className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900">{productsCount}</p>
+                  <p className="text-sm font-medium text-slate-700">Total Products</p>
+                  <p className="text-2xl font-bold text-slate-900">{productsCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -592,8 +592,8 @@ const Admin = () => {
               <div className="flex items-center">
                 <ShoppingCart className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{ordersCount}</p>
+                  <p className="text-sm font-medium text-slate-700">Total Orders</p>
+                  <p className="text-2xl font-bold text-slate-900">{ordersCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -604,9 +604,9 @@ const Admin = () => {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">All Customers</p>
-                  <p className="text-2xl font-bold text-gray-900">{customersCount}</p>
-                  <p className="text-xs text-gray-500">Permanent tracking enabled</p>
+                  <p className="text-sm font-medium text-slate-700">All Customers</p>
+                  <p className="text-2xl font-bold text-slate-900">{customersCount}</p>
+                  <p className="text-xs text-slate-600">Permanent tracking enabled</p>
                 </div>
               </div>
             </CardContent>
@@ -617,8 +617,8 @@ const Admin = () => {
               <div className="flex items-center">
                 <MessageSquare className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Testimonials</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-700">Testimonials</p>
+                  <p className="text-2xl font-bold text-slate-900">
                     {testimonialsCount || testimonials.length || 0}
                   </p>
                 </div>
@@ -654,7 +654,7 @@ const Admin = () => {
                     <Input
                       id="name"
                       value={newProduct.name}
-                      onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                       placeholder="Enter product name"
                     />
                   </div>
@@ -665,14 +665,14 @@ const Admin = () => {
                       id="price"
                       type="number"
                       value={newProduct.price}
-                      onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                       placeholder="Enter price"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="category">Category</Label>
-                    <Select value={newProduct.category} onValueChange={(value) => setNewProduct({...newProduct, category: value})}>
+                    <Select value={newProduct.category} onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -691,7 +691,7 @@ const Admin = () => {
                     <Input
                       id="catalog_number"
                       value={newProduct.catalog_number}
-                      onChange={(e) => setNewProduct({...newProduct, catalog_number: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, catalog_number: e.target.value })}
                       placeholder="Enter catalog number"
                     />
                   </div>
@@ -701,7 +701,7 @@ const Admin = () => {
                     <Textarea
                       id="description"
                       value={newProduct.description}
-                      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                       placeholder="Enter product description"
                       rows={3}
                     />
@@ -710,7 +710,7 @@ const Admin = () => {
                   <div className="md:col-span-2">
                     <ImageUpload
                       images={newProduct.images}
-                      onImagesChange={(images) => setNewProduct({...newProduct, images})}
+                      onImagesChange={(images) => setNewProduct({ ...newProduct, images })}
                       maxImages={5}
                     />
                   </div>
@@ -724,7 +724,7 @@ const Admin = () => {
                       max="5"
                       step="0.1"
                       value={newProduct.rating}
-                      onChange={(e) => setNewProduct({...newProduct, rating: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, rating: e.target.value })}
                       placeholder="Enter rating"
                     />
                   </div>
@@ -736,7 +736,7 @@ const Admin = () => {
                       type="number"
                       min="0"
                       value={newProduct.stock_quantity}
-                      onChange={(e) => setNewProduct({...newProduct, stock_quantity: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, stock_quantity: e.target.value })}
                       placeholder="Enter stock quantity"
                     />
                   </div>
@@ -746,7 +746,7 @@ const Admin = () => {
                       <Switch
                         id="in_stock"
                         checked={newProduct.in_stock}
-                        onCheckedChange={(checked) => setNewProduct({...newProduct, in_stock: checked})}
+                        onCheckedChange={(checked) => setNewProduct({ ...newProduct, in_stock: checked })}
                       />
                       <Label htmlFor="in_stock">In Stock</Label>
                     </div>
@@ -755,15 +755,15 @@ const Admin = () => {
                       <Switch
                         id="featured"
                         checked={newProduct.featured}
-                        onCheckedChange={(checked) => setNewProduct({...newProduct, featured: checked})}
+                        onCheckedChange={(checked) => setNewProduct({ ...newProduct, featured: checked })}
                       />
                       <Label htmlFor="featured">Featured</Label>
                     </div>
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleAddProduct} 
+                <Button
+                  onClick={handleAddProduct}
                   className="mt-4 bg-amber-600 hover:bg-amber-700"
                   disabled={loading || !newProduct.name || !newProduct.price || !newProduct.category}
                 >
@@ -789,9 +789,9 @@ const Admin = () => {
                         />
                         <div>
                           <h3 className="font-semibold">{product.name}</h3>
-                          <p className="text-sm text-gray-600">{product.category}</p>
+                          <p className="text-sm text-slate-700">{product.category}</p>
                           <p className="text-sm font-medium">₹{product.price}</p>
-                          <p className="text-xs text-gray-500">Stock: {product.stock_quantity || 0}</p>
+                          <p className="text-xs text-slate-600">Stock: {product.stock_quantity || 0}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -854,14 +854,6 @@ const Admin = () => {
             <CustomerDataSection />
           </TabsContent>
 
-          <TabsContent value="orders" className="space-y-6">
-            <OrderManagement />
-          </TabsContent>
-
-          <TabsContent value="customers" className="space-y-6">
-            <CustomerDataSection />
-          </TabsContent>
-
           <TabsContent value="permanent-customers" className="space-y-6">
             <PermanentCustomerManagement />
           </TabsContent>
@@ -886,7 +878,7 @@ const Admin = () => {
                     <Input
                       id="customer_name"
                       value={newTestimonial.customer_name}
-                      onChange={(e) => setNewTestimonial({...newTestimonial, customer_name: e.target.value})}
+                      onChange={(e) => setNewTestimonial({ ...newTestimonial, customer_name: e.target.value })}
                       placeholder="Enter customer name"
                     />
                   </div>
@@ -897,14 +889,14 @@ const Admin = () => {
                       id="customer_email"
                       type="email"
                       value={newTestimonial.customer_email}
-                      onChange={(e) => setNewTestimonial({...newTestimonial, customer_email: e.target.value})}
+                      onChange={(e) => setNewTestimonial({ ...newTestimonial, customer_email: e.target.value })}
                       placeholder="Enter customer email"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="rating">Rating (1-5)</Label>
-                    <Select value={newTestimonial.rating} onValueChange={(value) => setNewTestimonial({...newTestimonial, rating: value})}>
+                    <Select value={newTestimonial.rating} onValueChange={(value) => setNewTestimonial({ ...newTestimonial, rating: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select rating" />
                       </SelectTrigger>
@@ -922,7 +914,7 @@ const Admin = () => {
                     <Switch
                       id="is_featured"
                       checked={newTestimonial.is_featured}
-                      onCheckedChange={(checked) => setNewTestimonial({...newTestimonial, is_featured: checked})}
+                      onCheckedChange={(checked) => setNewTestimonial({ ...newTestimonial, is_featured: checked })}
                     />
                     <Label htmlFor="is_featured">Featured</Label>
                   </div>
@@ -932,15 +924,15 @@ const Admin = () => {
                     <Textarea
                       id="review_text"
                       value={newTestimonial.review_text}
-                      onChange={(e) => setNewTestimonial({...newTestimonial, review_text: e.target.value})}
+                      onChange={(e) => setNewTestimonial({ ...newTestimonial, review_text: e.target.value })}
                       placeholder="Enter review text"
                       rows={3}
                     />
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleAddTestimonial} 
+                <Button
+                  onClick={handleAddTestimonial}
                   className="mt-4 bg-amber-600 hover:bg-amber-700"
                   disabled={!newTestimonial.customer_name || !newTestimonial.rating || !newTestimonial.review_text}
                 >
@@ -954,9 +946,9 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Testimonials ({testimonials.length})</span>
-                  <Button 
-                    onClick={fetchData} 
-                    variant="outline" 
+                  <Button
+                    onClick={fetchData}
+                    variant="outline"
                     size="sm"
                     className="ml-2"
                   >
@@ -975,13 +967,12 @@ const Admin = () => {
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
-                                className={`h-4 w-4 ${
-                                  star <= testimonial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                }`}
+                                className={`h-4 w-4 ${star <= testimonial.rating ? 'text-yellow-400 fill-current' : 'text-slate-300'
+                                  }`}
                               />
                             ))}
                           </div>
-                          <p className="text-sm text-gray-600">{testimonial.review_text}</p>
+                          <p className="text-sm text-slate-700">{testimonial.review_text}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Badge variant={testimonial.is_featured ? "default" : "secondary"}>
@@ -1003,7 +994,7 @@ const Admin = () => {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-600">
                         Created: {new Date(testimonial.created_at).toLocaleString()}
                       </div>
                     </div>
@@ -1025,7 +1016,7 @@ const Admin = () => {
                     <Input
                       id="hero_title"
                       value={newHomepageContent.hero_title}
-                      onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_title: e.target.value})}
+                      onChange={(e) => setNewHomepageContent({ ...newHomepageContent, hero_title: e.target.value })}
                       placeholder="Enter hero title"
                     />
                   </div>
@@ -1035,7 +1026,7 @@ const Admin = () => {
                     <Input
                       id="hero_subtitle"
                       value={newHomepageContent.hero_subtitle}
-                      onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_subtitle: e.target.value})}
+                      onChange={(e) => setNewHomepageContent({ ...newHomepageContent, hero_subtitle: e.target.value })}
                       placeholder="Enter hero subtitle"
                     />
                   </div>
@@ -1045,7 +1036,7 @@ const Admin = () => {
                     <Textarea
                       id="hero_description"
                       value={newHomepageContent.hero_description}
-                      onChange={(e) => setNewHomepageContent({...newHomepageContent, hero_description: e.target.value})}
+                      onChange={(e) => setNewHomepageContent({ ...newHomepageContent, hero_description: e.target.value })}
                       placeholder="Enter hero description"
                       rows={3}
                     />
@@ -1053,11 +1044,11 @@ const Admin = () => {
 
                   <HomepageImageUpload
                     imageUrl={newHomepageContent.hero_image_url}
-                    onImageChange={(url) => setNewHomepageContent({...newHomepageContent, hero_image_url: url})}
+                    onImageChange={(url) => setNewHomepageContent({ ...newHomepageContent, hero_image_url: url })}
                   />
 
-                  <Button 
-                    onClick={handleUpdateHomepageContent} 
+                  <Button
+                    onClick={handleUpdateHomepageContent}
                     className="bg-amber-600 hover:bg-amber-700"
                   >
                     Update Homepage Content
@@ -1076,7 +1067,7 @@ const Admin = () => {
           onSave={handleUpdateProduct}
         />
       </div>
-      
+
       <Footer />
     </div>
   );

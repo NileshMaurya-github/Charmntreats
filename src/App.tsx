@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { useEffect, lazy, Suspense } from "react";
 import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
+import PageTransition from "@/components/Layout/PageTransition";
 
 // Lazy load pages for better performance and code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -22,6 +23,8 @@ const TestEmails = lazy(() => import("./pages/TestEmails"));
 const EmailTest = lazy(() => import("./pages/EmailTest"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AddProduct = lazy(() => import("./pages/admin/AddProduct"));
 const Vlog = lazy(() => import("./pages/Vlog"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -90,10 +93,6 @@ const PerformanceWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-import PageTransition from "@/components/Layout/PageTransition";
-
-// ...existing code...
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -126,6 +125,8 @@ const App = () => (
                       <Route path="/about" element={<AboutUs />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogPost />} />
+
+                      {/* Admin Routes */}
                       <Route
                         path="/admin"
                         element={
@@ -134,6 +135,23 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/products/add"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AddProduct />
+                          </ProtectedRoute>
+                        }
+                      />
+
                       <Route path="/blogDetails/DreamCatcher" element={<DreamCatcher />} />
                       <Route path="/blogDetails/Embroidery" element={<Embroidery />} />
                       <Route path="/blogDetails/LippanArt" element={<LippanArt />} />

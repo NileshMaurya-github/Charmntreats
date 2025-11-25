@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, Shield, Quote, Sparkles } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+
 
 interface Testimonial {
   id: string;
@@ -20,27 +20,41 @@ const Testimonials = () => {
     fetchTestimonials();
   }, []);
 
-  const fetchTestimonials = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .eq('is_featured', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
-      setTestimonials(data || []);
-    } catch (error) {
-      console.error('Error fetching testimonials:', error);
-    } finally {
-      setLoading(false);
+  const MOCK_TESTIMONIALS: Testimonial[] = [
+    {
+      id: '1',
+      customer_name: 'Priya Sharma',
+      rating: 5,
+      review_text: 'Absolutely in love with the dream catcher I ordered! The craftsmanship is exquisite and it adds such a magical touch to my bedroom.',
+      is_featured: true
+    },
+    {
+      id: '2',
+      customer_name: 'Rahul Verma',
+      rating: 5,
+      review_text: 'The resin art piece is a stunner. The colors are so vibrant and the finish is perfect. Highly recommend Charmntreats!',
+      is_featured: true
+    },
+    {
+      id: '3',
+      customer_name: 'Ananya Gupta',
+      rating: 5,
+      review_text: 'Ordered custom candles for my wedding favors. They smelled divine and looked beautiful. Thank you for the amazing service!',
+      is_featured: true
     }
+  ];
+
+  const fetchTestimonials = () => {
+    // Simulate network delay for effect
+    setTimeout(() => {
+      setTestimonials(MOCK_TESTIMONIALS);
+      setLoading(false);
+    }, 1000);
   };
 
   if (loading) {
     return (
-      <section className="relative py-20 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
+      <section className="relative py-8 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="relative">
@@ -55,7 +69,7 @@ const Testimonials = () => {
   }
 
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
+    <section className="relative py-8 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-pink-900">
       {/* Floating Particles Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-pink-500/10 rounded-full blur-3xl animate-float-slow"></div>
@@ -81,7 +95,7 @@ const Testimonials = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Section Header - GOD LEVEL */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8">
           <div className="relative inline-block mb-6">
             <div className="absolute -inset-4 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
             <div className="relative bg-white/10 backdrop-blur-xl px-8 py-3 rounded-2xl border-2 border-white/20">
@@ -92,7 +106,7 @@ const Testimonials = () => {
               </div>
             </div>
           </div>
-          
+
           <h2 className="text-5xl md:text-7xl font-black mb-6 relative">
             <span className="absolute inset-0 text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-200 to-pink-300 blur-sm">
               What Our Customers Say
@@ -104,7 +118,7 @@ const Testimonials = () => {
               What Our Customers Say
             </span>
           </h2>
-          
+
           <p className="text-xl text-white/80 max-w-3xl mx-auto font-bold leading-relaxed">
             Real reviews from real customers who love our{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-400 to-pink-400">
@@ -119,11 +133,11 @@ const Testimonials = () => {
             <div key={testimonial.id} className="group relative">
               {/* Outer Glow */}
               <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 rounded-3xl blur-xl opacity-0 group-hover:opacity-60 transition-all duration-700"></div>
-              
+
               <Card className="relative bg-white/10 backdrop-blur-xl border-2 border-white/20 hover:border-pink-400/50 transition-all duration-500 hover:scale-105 overflow-hidden rounded-3xl h-full">
                 {/* Card Shine Effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
+
                 {/* Floating Quote Icon */}
                 <div className="absolute top-6 right-6 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
                   <Quote className="w-20 h-20 text-pink-300" strokeWidth={1} />
@@ -134,17 +148,17 @@ const Testimonials = () => {
                   <div className="flex items-center gap-1 mb-6">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <div key={i} className="relative">
-                        <Star className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-lg animate-pulse" 
+                        <Star className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-lg animate-pulse"
                           style={{ animationDelay: `${i * 0.1}s` }} />
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* Review Text */}
                   <p className="text-white/90 mb-8 italic font-medium text-base leading-relaxed">
                     "{testimonial.review_text}"
                   </p>
-                  
+
                   {/* Customer Info - Enhanced */}
                   <div className="flex items-center gap-4 pt-6 border-t border-white/10">
                     <div className="relative">

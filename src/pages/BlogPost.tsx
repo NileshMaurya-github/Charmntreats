@@ -37,7 +37,7 @@ const BlogPostPage = () => {
       console.log('🔍 BlogPost: Fetching blog post:', slug);
 
       const postData = await blogService.getPostBySlug(slug!);
-      
+
       if (!postData) {
         console.log('❌ BlogPost: Post not found');
         navigate('/blog');
@@ -75,7 +75,7 @@ const BlogPostPage = () => {
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!post || !commentForm.name.trim() || !commentForm.email.trim() || !commentForm.content.trim()) {
       toast({
         title: "Error",
@@ -141,10 +141,10 @@ const BlogPostPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+      <div className="min-h-screen bg-slate-50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-pulse text-lg text-slate-600">Loading blog post...</div>
+            <div className="animate-pulse text-lg text-slate-700">Loading blog post...</div>
           </div>
         </div>
       </div>
@@ -153,10 +153,10 @@ const BlogPostPage = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+      <div className="min-h-screen bg-slate-50">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-20">
-            <h1 className="text-2xl font-bold text-slate-800 mb-4">Post Not Found</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mb-4">Post Not Found</h1>
             <Link to="/blog">
               <Button className="btn-dark-pink">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -170,7 +170,7 @@ const BlogPostPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+    <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <div className="mb-6">
@@ -204,7 +204,7 @@ const BlogPostPage = () => {
 
               <CardHeader className="pb-4">
                 {/* Meta Information */}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 mb-4">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700 mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     <span>{formatDate(post.published_at)}</span>
@@ -222,7 +222,7 @@ const BlogPostPage = () => {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                   {post.title}
                 </h1>
 
@@ -245,16 +245,16 @@ const BlogPostPage = () => {
               <CardContent>
                 {/* Excerpt */}
                 {post.excerpt && (
-                  <div className="text-lg text-slate-600 italic mb-6 p-4 bg-slate-50 rounded-lg border-l-4 border-amber-500">
+                  <div className="text-lg text-slate-700 italic mb-6 p-4 bg-slate-50 rounded-lg border-l-4 border-pink-500">
                     {post.excerpt}
                   </div>
                 )}
 
                 {/* Content */}
-                <div 
+                <div
                   className="prose prose-slate max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: `<p class="text-slate-700 leading-relaxed mb-4">${formatContent(post.content)}</p>` 
+                  dangerouslySetInnerHTML={{
+                    __html: `<p class="text-slate-800 leading-relaxed mb-4">${formatContent(post.content)}</p>`
                   }}
                 />
               </CardContent>
@@ -263,7 +263,7 @@ const BlogPostPage = () => {
             {/* Comments Section */}
             <Card>
               <CardHeader>
-                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
                   Comments ({comments.length})
                 </h3>
@@ -271,7 +271,7 @@ const BlogPostPage = () => {
               <CardContent>
                 {/* Comment Form */}
                 <form onSubmit={handleCommentSubmit} className="mb-8 space-y-4">
-                  <h4 className="font-semibold text-slate-800">Leave a Comment</h4>
+                  <h4 className="font-semibold text-slate-900">Leave a Comment</h4>
                   <div className="grid gap-4 md:grid-cols-2">
                     <Input
                       placeholder="Your Name"
@@ -294,8 +294,8 @@ const BlogPostPage = () => {
                     rows={4}
                     required
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={commentLoading}
                     className="btn-dark-pink"
                   >
@@ -308,7 +308,7 @@ const BlogPostPage = () => {
                       </>
                     )}
                   </Button>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-600">
                     Your comment will be reviewed before being published.
                   </p>
                 </form>
@@ -317,21 +317,21 @@ const BlogPostPage = () => {
 
                 {/* Comments List */}
                 {comments.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-slate-600">
                     <MessageCircle className="h-12 w-12 mx-auto mb-3 text-slate-400" />
                     <p>No comments yet. Be the first to comment!</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {comments.map((comment) => (
-                      <div key={comment.id} className="border-l-2 border-amber-200 pl-4">
+                      <div key={comment.id} className="border-l-2 border-slate-200 pl-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold text-slate-800">{comment.user_name}</span>
-                          <span className="text-sm text-slate-500">
+                          <span className="font-semibold text-slate-900">{comment.user_name}</span>
+                          <span className="text-sm text-slate-600">
                             {formatDate(comment.created_at)}
                           </span>
                         </div>
-                        <p className="text-slate-700">{comment.content}</p>
+                        <p className="text-slate-800">{comment.content}</p>
                       </div>
                     ))}
                   </div>
@@ -346,22 +346,22 @@ const BlogPostPage = () => {
             {relatedPosts.length > 0 && (
               <Card>
                 <CardHeader>
-                  <h3 className="text-lg font-bold text-slate-800">Related Posts</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Related Posts</h3>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {relatedPosts.map((relatedPost) => (
                     <div key={relatedPost.id} className="border-b border-slate-200 last:border-b-0 pb-4 last:pb-0">
-                      <Link 
+                      <Link
                         to={`/blog/${relatedPost.slug}`}
                         className="block hover:text-black transition-colors"
                       >
-                        <h4 className="font-semibold text-slate-800 mb-1 line-clamp-2">
+                        <h4 className="font-semibold text-slate-900 mb-1 line-clamp-2">
                           {relatedPost.title}
                         </h4>
                         <p className="text-sm text-slate-600 line-clamp-2">
                           {relatedPost.excerpt}
                         </p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-600">
                           <Calendar className="h-3 w-3" />
                           <span>{formatDate(relatedPost.published_at)}</span>
                         </div>
@@ -375,8 +375,8 @@ const BlogPostPage = () => {
             {/* Back to Blog */}
             <Card>
               <CardContent className="p-6 text-center">
-                <h3 className="font-semibold text-slate-800 mb-3">Explore More</h3>
-                <p className="text-sm text-slate-600 mb-4">
+                <h3 className="font-semibold text-slate-900 mb-3">Explore More</h3>
+                <p className="text-sm text-slate-700 mb-4">
                   Discover more handcrafted inspiration and DIY tutorials
                 </p>
                 <Link to="/blog">
